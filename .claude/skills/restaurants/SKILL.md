@@ -92,6 +92,12 @@ Group into separate tables by category if the user hasn't specified (e.g., "Fine
 
 After the table, add a brief **Highlights** section with 1-line notes on standout dishes or tips for the top 3-4 picks.
 
+### 3b. Update Plan Files
+
+When part of an active plan:
+1. Update `trip-data.json` — append to the `restaurants` array
+2. Update `trip-plan.html` — regenerate the Food Guide section with the new restaurants, grouped by cuisine, every restaurant name linked to its Yelp page
+
 ### 4. Follow-up
 
 Offer to:

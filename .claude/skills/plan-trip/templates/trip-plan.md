@@ -27,7 +27,118 @@ Pick a destination-appropriate palette. The SLC example uses earthy/mountain ton
 ```
 Adapt colors to the destination: tropical = teals + coral, European = muted blues + cream, mountain = earth tones, beach = sand + ocean.
 
+## Navigation
+
+Every trip plan HTML **must include a sticky navigation bar** for jumping between sections. The nav appears after scrolling past the hero.
+
+### Implementation
+
+- Fixed/sticky `<nav>` bar at the top of the viewport, hidden until the user scrolls past the hero
+- Uses `IntersectionObserver` on the hero to toggle a `scrolled` class on the nav
+- Each section gets an `id` attribute: `flights`, `stay`, `weather`, `itinerary`, `food`, `tips`
+- Nav links use `scroll-behavior: smooth` anchor links (`#flights`, `#stay`, etc.)
+- Active section is highlighted as the user scrolls (use `IntersectionObserver` on each section)
+
+### Styling
+
+```css
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--warm-white);
+  border-bottom: 1px solid var(--sand);
+  padding: 0.6rem 1.5rem;
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+}
+
+.nav-bar.visible {
+  transform: translateY(0);
+}
+
+.nav-bar a {
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--slate-light);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.nav-bar a.active,
+.nav-bar a:hover {
+  color: var(--terracotta);
+  border-bottom-color: var(--terracotta);
+}
+```
+
+### HTML structure
+
+```html
+<nav class="nav-bar" id="nav">
+  <a href="#flights">Flights</a>
+  <a href="#stay">Stay</a>
+  <a href="#weather">Weather</a>
+  <a href="#itinerary">Itinerary</a>
+  <a href="#food">Food</a>
+  <a href="#tips">Tips</a>
+</nav>
+```
+
+### JavaScript
+
+```javascript
+// Show/hide nav based on hero visibility
+const hero = document.querySelector('.hero');
+const nav = document.getElementById('nav');
+const heroObserver = new IntersectionObserver(([entry]) => {
+  nav.classList.toggle('visible', !entry.isIntersecting);
+}, { threshold: 0.1 });
+heroObserver.observe(hero);
+
+// Highlight active section
+const sections = document.querySelectorAll('section[id], div[id]');
+const navLinks = document.querySelectorAll('.nav-bar a');
+const sectionObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(a => a.classList.remove('active'));
+      const active = document.querySelector(`.nav-bar a[href="#${entry.target.id}"]`);
+      if (active) active.classList.add('active');
+    }
+  });
+}, { threshold: 0.3, rootMargin: '-80px 0px 0px 0px' });
+sections.forEach(s => sectionObserver.observe(s));
+```
+
+### Mobile
+
+On screens < 700px, the nav bar scrolls horizontally:
+```css
+@media (max-width: 700px) {
+  .nav-bar {
+    overflow-x: auto;
+    justify-content: flex-start;
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    -webkit-overflow-scrolling: touch;
+  }
+  .nav-bar a { white-space: nowrap; }
+}
+```
+
 ## Page Sections (in order)
+
+Each section must have an `id` matching the nav links above.
 
 ### 1. Hero
 Full-viewport intro with:
@@ -35,6 +146,51 @@ Full-viewport intro with:
 - **Destination name** — large Fraunces heading, italic on the secondary word
 - **Date range and tagline** — one-line subtitle
 - **Stat cards** — 4 key stats: flight duration, weather, travelers, estimated cost
+- **Table of Contents** — a row of styled anchor links below the stats, acting as a visual TOC and quick-jump navigation. Each links to the corresponding section `id`.
+
+```html
+<div class="hero-toc">
+  <a href="#flights">&#9992; Flights</a>
+  <a href="#stay">&#127968; Stay</a>
+  <a href="#weather">&#9728; Weather</a>
+  <a href="#itinerary">&#128197; Itinerary</a>
+  <a href="#food">&#127860; Food</a>
+  <a href="#tips">&#127890; Tips</a>
+</div>
+```
+
+```css
+.hero-toc {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 2rem;
+  animation: fadeDown 0.8s ease-out 0.5s both;
+}
+
+.hero-toc a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--warm-white);
+  border: 1px solid var(--sand);
+  border-radius: 10px;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--slate);
+  text-decoration: none;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.hero-toc a:hover {
+  transform: translateY(-2px);
+  border-color: var(--terracotta-light);
+  box-shadow: 0 4px 12px rgba(44,53,57,0.08);
+}
+```
+
 - **Scroll hint** — down arrow at bottom
 
 Background: radial gradients using palette colors on the cream base + subtle grid lines.

@@ -93,6 +93,8 @@ Use the `mcp__playwright__*` tools only when Selenium Grid is unavailable. Key t
 
 ### Conventions
 
+- **Every recommendation must include a link.** No flights, hotels, restaurants, or attractions should ever be presented without a direct URL the user can click to view/book. This applies to both chat responses and `trip-plan.html`. If a link can't be found, note it explicitly rather than silently omitting it.
+- When updating `trip-data.json`, also update `trip-plan.html` to keep them in sync. Both files should always reflect the current state of the plan.
 - Prefer `browser_snapshot` over `browser_take_screenshot` for extracting text/data — snapshots return structured accessible content
 - Always close the browser (`browser_close` or `driver.quit()`) when done
 - Handle cookie consent banners and popups before scraping

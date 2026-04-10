@@ -1,2 +1,5 @@
 # Trip plans contain personal travel data
 plans/
+
+# Playwright MCP runtime logs
+.playwright-mcp/
