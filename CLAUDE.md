@@ -4,99 +4,103 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a skills-only project — no application code. It contains Claude Code skills for travel planning that use browser automation (Playwright MCP, Selenium) to find attractions, hotels, restaurants, flights, and other travel information by navigating real travel websites.
+A travel planning system with two interfaces:
+
+1. **Claude Code skills** (`.claude/skills/`) — for interactive use within Claude Code
+2. **Standalone Python agent** (`travel_agent/`) — model-agnostic (GPT-5, Claude, etc.), platform-agnostic (OpenWebUI, CLI, FastAPI, etc.)
+
+Both share the same reference files, tools, and trip data. The agent reads directly from `.claude/skills/*/references/` so updates to skills are picked up by both interfaces.
 
 ## Skill Structure
 
-Skills live under `.claude/skills/<skill-name>/` following the standard Claude Code skill layout:
+Skills live under `.claude/skills/<skill-name>/`:
 
 ```
 .claude/skills/<skill-name>/
   SKILL.md          # Skill definition with frontmatter (name, description, triggers)
-  prompts/          # Reusable prompt fragments
   templates/        # Output templates (HTML, markdown)
-  references/       # Reference data (site selectors, URL patterns)
-  tools/            # Custom tool definitions if needed
+  references/       # Reference data (site selectors, URL patterns) — shared with agent
+  scripts/          # Selenium automation scripts
 ```
 
-### SKILL.md Frontmatter
+## Standalone Agent
 
-Every skill must have YAML frontmatter:
+The `travel_agent/` package is a model & platform agnostic agent:
 
-```yaml
----
-name: skill-name
-description: One-line description used for skill matching/triggering
-metadata:
-  author: narangwa
-  version: "0.1.0"
----
 ```
+travel_agent/
+  agent.py            # Core TravelAgent class — tool-use loop, search vs plan mode
+  llm_provider.py     # OpenAIProvider + AnthropicProvider + make_provider()
+  system_prompt.py    # Reads from .claude/skills/ (shared source of truth)
+  tool_registry.py    # 12 tool schemas + execute_tool() dispatcher
+  tools/              # Selenium search tools + trip state CRUD + HTML generator
+  adapters/           # CLI, OpenWebUI Pipe, FastAPI
+```
+
+**Usage:**
+```bash
+# CLI
+LLM_PROVIDER=openai API_KEY=sk-... MODEL=gpt-5 python3.12 -m travel_agent.adapters.cli
+
+# FastAPI
+uvicorn travel_agent.adapters.fastapi_app:app
+
+# OpenWebUI — paste adapters/openwebui_pipe.py into Admin > Functions
+```
+
+**Config (env vars or OpenWebUI Valves):** `LLM_PROVIDER`, `API_KEY`, `MODEL`, `REASONING_EFFORT` (default: medium), `SELENIUM_GRID_URL`, `PLANS_DIR`
+
+### Search vs Plan Mode
+
+The agent distinguishes user intent:
+- **Search mode** ("find restaurants in SLC") — searches and presents results, no file writes
+- **Plan mode** ("plan a trip to SLC", "add to my trip") — creates/updates `trip-data.json` and `trip-plan.html`
+
+### Existing Plan Awareness
+
+The agent's system prompt includes all plans on disk. When a user says "my SLC trip" or "the Salt Lake City plan", it matches to the right `plan_dir` and loads context automatically.
 
 ## Travel Plans
 
-Plans live in the `plans/` folder. Each trip gets its own subfolder with two files:
+Plans live in `plans/`. Each trip gets its own subfolder:
 
 ```
-plans/
-  tokyo-june-2026/
-    trip-data.json    # All trip data — travelers, dates, preferences, research findings, itinerary
-    trip-plan.html    # Polished visual plan page (generated from trip-data.json)
-  italy-rome-florence-sept-2026/
-    trip-data.json
-    trip-plan.html
+plans/slc-may-2026/
+  trip-data.json    # Structured trip data (JSON schema at .claude/skills/plan-trip/references/)
+  trip-plan.html    # Visual plan page (generated from trip-data.json via LLM)
 ```
 
 ### How Plans Work
 
-1. **`plan-trip`** is the orchestrator skill — it gathers traveler info, destination, dates, and preferences, then creates the plan folder and `trip-data.json`
-2. The individual skills (`find-flights`, `find-hotels`, `find-restaurants`, `find-attractions`) read from `trip-data.json` for context so the user doesn't repeat themselves
-3. After researching, each skill writes its findings back into the relevant section of `trip-data.json` (e.g., `flights.outbound`, `hotels.options`, `restaurants`, `attractions`)
-4. Research order: flights → hotels → attractions → restaurants (each step informs the next — hotel location affects restaurant search, flight times affect check-in dates)
-5. Once all research is done, generate `trip-plan.html` from `trip-data.json` using the `frontend-design` skill. See `~/slc-trip-plan.html` as the design reference and `.claude/skills/plan-trip/templates/trip-plan.md` for the template spec.
+1. **`plan-trip`** gathers traveler info, creates `trip-data.json`
+2. Individual skills/tools search and write to specific sections (`flights.outbound`, `hotels.options`, `restaurants`, etc.)
+3. Research order: flights → hotels → attractions → restaurants
+4. When finalized (flight booked, hotel selected): promote to `selected`, clear options arrays
+5. `trip-plan.html` is generated from `trip-data.json` via an LLM call using the template spec at `.claude/skills/plan-trip/templates/trip-plan.md`
 
 ### Why JSON over Markdown
 
-`trip-data.json` is the working data file — compact, structured, and token-efficient. The HTML is the human-readable output. Skills read/write specific JSON fields (`flights.selected`, `hotels.options[0].price_per_night`) without parsing markdown tables.
-
-### Resuming Plans
-
-To resume an existing plan, read `trip-data.json` from the relevant `plans/` subfolder. Check which sections are populated vs empty to understand what's done.
+`trip-data.json` is compact and token-efficient. Skills/tools read/write specific fields without parsing. When a flight is booked, clearing the options array keeps the file small. The HTML is the human-readable output.
 
 ## Browser Automation
 
-Two browser backends are available:
-
 ### 1. Selenium Grid (default)
 
-A Selenium Grid instance is available at `http://192.168.68.168:4444/` running Chrome 144.0 on Linux. This is the primary method for all browser automation. Many travel sites (Kayak, TripAdvisor) detect Playwright as a bot and block it, but Selenium Grid with Chrome works reliably for Kayak and most other sites.
+At `http://192.168.68.168:4444/` running Chrome. Primary method — Kayak, Yelp, Airbnb work reliably. All tools accept a `grid_url` parameter.
 
-Connect via WebDriver protocol by running a Python script:
-
-```python
-from selenium import webdriver
-options = webdriver.ChromeOptions()
-driver = webdriver.Remote(command_executor="http://192.168.68.168:4444", options=options)
-```
-
-**Note on TripAdvisor:** TripAdvisor blocks even Selenium Grid. For TripAdvisor data (restaurant reviews, attraction ratings, hotel reviews), use Google search as a proxy — search for `site:tripadvisor.com "{query}"` and extract ratings/snippets from Google results without hitting TripAdvisor directly.
+**TripAdvisor:** Blocks all automated browsers. Use Google as proxy: `site:tripadvisor.com "{query}"`.
 
 ### 2. Playwright MCP (fallback)
 
-Use the `mcp__playwright__*` tools only when Selenium Grid is unavailable. Key tools:
+Claude Code's built-in `mcp__playwright__*` tools. Use only when Selenium Grid is unavailable.
 
-- `browser_navigate` — go to a URL
-- `browser_snapshot` — get accessible page structure (preferred over screenshots for data extraction)
-- `browser_click` / `browser_fill_form` — interact with forms and filters
-- `browser_evaluate` — run JS on the page for complex extraction
-- `browser_take_screenshot` — visual capture when needed
+## Conventions
 
-### Conventions
-
-- **Every recommendation must include a link.** No flights, hotels, restaurants, or attractions should ever be presented without a direct URL the user can click to view/book. This applies to both chat responses and `trip-plan.html`. If a link can't be found, note it explicitly rather than silently omitting it.
-- When updating `trip-data.json`, also update `trip-plan.html` to keep them in sync. Both files should always reflect the current state of the plan.
-- Prefer `browser_snapshot` over `browser_take_screenshot` for extracting text/data — snapshots return structured accessible content
-- Always close the browser (`browser_close` or `driver.quit()`) when done
-- Handle cookie consent banners and popups before scraping
-- Use `browser_wait_for` (Playwright) or explicit waits (Selenium) when pages load content dynamically
-- Store site-specific CSS selectors and URL patterns in `references/` so they can be updated without changing skill logic
+- **Every recommendation must include a link** — booking URL, Yelp page, Airbnb listing, etc. No exceptions. Applies to chat responses and HTML.
+- **Present results in markdown tables** for easy scanning
+- **Update both `trip-data.json` and `trip-plan.html`** when the plan changes
+- **Use airport codes** for flights (SEA, SLC) not city names
+- **Use hyphenated city,state,country** for Kayak hotels: `Salt-Lake-City,Utah,United-States`
+- Prefer `browser_snapshot` over screenshots for data extraction
+- Always close browsers (`browser_close` or `driver.quit()`)
+- Store site-specific URL patterns in `references/` — update there when sites change
