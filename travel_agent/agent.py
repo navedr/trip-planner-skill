@@ -21,7 +21,7 @@ class TravelAgent:
     ):
         self.provider = provider
         self._base_system_prompt = build_system_prompt()
-        self.config = {"grid_url": grid_url, "plans_dir": plans_dir}
+        self.config = {"grid_url": grid_url, "plans_dir": plans_dir, "provider": provider}
         self._executor = ThreadPoolExecutor(max_workers=2)
         # Import here to avoid circular imports
         from .tool_registry import TOOLS, execute_tool

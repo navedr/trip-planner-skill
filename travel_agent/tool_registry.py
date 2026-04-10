@@ -549,12 +549,11 @@ def _dispatch(name: str, args: dict, config: dict) -> Any:
         )
         return {"status": "finalized", "plan_dir": args["plan_dir"], "category": args["category"]}
 
-    # -- Placeholder tools --
-
     if name == "generate_html_plan":
-        return {
-            "status": "not_implemented",
-            "message": f"HTML generation for {args['plan_dir']} is not yet implemented. Coming soon.",
-        }
+        from .tools.html_generator import generate_html_plan
+        return generate_html_plan(
+            plan_dir=args["plan_dir"],
+            provider=config.get("provider"),
+        )
 
     raise ValueError(f"Unknown tool: {name}")
