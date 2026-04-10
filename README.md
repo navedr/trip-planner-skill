@@ -102,59 +102,7 @@ uvicorn travel_agent.adapters.fastapi_app:app
 | `SELENIUM_GRID_URL` | `http://192.168.68.168:4444` | Selenium Grid endpoint |
 | `PLANS_DIR` | `./plans` | Where trip plans are stored |
 
-## Project Structure
-
-```
-travel-planner/
-├── CLAUDE.md                           # Instructions for Claude Code
-├── README.md
-├── requirements.txt
-├── .claude/skills/                     # Claude Code skills (shared source of truth)
-│   ├── plan-trip/                      # Orchestrator
-│   │   ├── SKILL.md
-│   │   ├── references/
-│   │   │   └── trip-data-schema.json   # JSON schema for trip data
-│   │   └── templates/
-│   │       └── trip-plan.md            # HTML template spec
-│   ├── flights/                        # Kayak flight search
-│   │   ├── SKILL.md
-│   │   ├── references/sites.md         # URL patterns, selectors
-│   │   └── scripts/search_kayak.py
-│   ├── hotels/                         # Kayak Hotels + Airbnb
-│   │   ├── SKILL.md
-│   │   ├── references/sites.md
-│   │   └── scripts/
-│   ├── attractions/                    # Google → TripAdvisor
-│   │   ├── SKILL.md
-│   │   ├── references/sites.md
-│   │   └── scripts/
-│   └── restaurants/                    # Yelp
-│       ├── SKILL.md
-│       ├── references/sites.md
-│       └── scripts/
-├── travel_agent/                       # Standalone agent package
-│   ├── agent.py                        # Core TravelAgent class
-│   ├── llm_provider.py                 # OpenAI + Anthropic providers
-│   ├── system_prompt.py                # Reads from .claude/skills/ (shared!)
-│   ├── tool_registry.py                # 12 tool schemas + dispatcher
-│   ├── tools/                          # Selenium-based search tools
-│   │   ├── _selenium.py                # Shared driver factory
-│   │   ├── flights.py
-│   │   ├── hotels.py
-│   │   ├── restaurants.py
-│   │   ├── attractions.py
-│   │   └── trip_state.py               # trip-data.json CRUD
-│   └── adapters/                       # Platform adapters
-│       ├── cli.py                      # Terminal REPL
-│       ├── openwebui_pipe.py           # OpenWebUI Pipe Function
-│       └── fastapi_app.py              # REST API
-└── plans/                              # Trip folders (gitignored)
-    └── slc-may-2026/
-        ├── trip-data.json
-        └── trip-plan.html
-```
-
-### Shared Source of Truth
+## Shared Source of Truth
 
 The agent's `system_prompt.py` reads directly from `.claude/skills/*/references/` — the same files Claude Code uses. Update a skill's `sites.md` or the JSON schema, and both interfaces pick up the change.
 
