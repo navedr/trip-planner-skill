@@ -3,3 +3,8 @@ plans/
 
 # Playwright MCP runtime logs
 .playwright-mcp/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
