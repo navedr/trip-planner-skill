@@ -1,0 +1,88 @@
+"""Search TripAdvisor for attractions using Selenium Grid.
+
+Usage:
+    python search_tripadvisor.py --destination "Salt Lake City" --interest "museums"
+
+Connects to the Selenium Grid at http://192.168.68.168:4444/
+"""
+
+import argparse
+import time
+import urllib.parse
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+
+
+def search(args):
+    query = f"things to do in {args.destination}"
+    if args.interest:
+        query += f" {args.interest}"
+
+    url = f"https://www.tripadvisor.com/Search?q={urllib.parse.quote(query)}"
+
+    options = webdriver.ChromeOptions()
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--window-size=1920,1080")
+
+    driver = webdriver.Remote(
+        command_executor="http://192.168.68.168:4444",
+        options=options,
+    )
+
+    try:
+        print(f"Navigating to: {url}")
+        driver.get(url)
+
+        # Handle cookie consent
+        time.sleep(3)
+        try:
+            accept_btn = driver.find_element(By.CSS_SELECTOR, "#onetrust-accept-btn-handler")
+            accept_btn.click()
+            time.sleep(1)
+        except Exception:
+            pass
+
+        print("Waiting for results...")
+        time.sleep(5)
+
+        results = driver.execute_script("""
+            const attractions = [];
+            const cards = document.querySelectorAll('[data-test-target="attractions-list"] > div, .result-card, .search-results-list .result');
+            cards.forEach((card, i) => {
+                if (i >= 10) return;
+                attractions.push(card.innerText);
+            });
+            if (attractions.length === 0) {
+                const fallback = document.querySelectorAll('.search-results-list li, [class*="result"]');
+                fallback.forEach((el, i) => {
+                    if (i >= 10) return;
+                    const text = el.innerText.trim();
+                    if (text.length > 20) attractions.push(text);
+                });
+            }
+            return attractions;
+        """)
+
+        print(f"\nFound {len(results)} attraction results:\n")
+        for i, result in enumerate(results, 1):
+            print(f"--- Attraction {i} ---")
+            print(result)
+            print()
+
+        screenshot_path = f"/tmp/tripadvisor-attractions-{args.destination.replace(' ', '-')}.png"
+        driver.save_screenshot(screenshot_path)
+        print(f"Screenshot saved: {screenshot_path}")
+
+        return results
+
+    finally:
+        driver.quit()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Search TripAdvisor for attractions")
+    parser.add_argument("--destination", required=True, help="City/destination")
+    parser.add_argument("--interest", help="Interest type (e.g., museums, nature, family)")
+    args = parser.parse_args()
+    search(args)

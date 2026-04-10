@@ -1,0 +1,244 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TripData",
+  "description": "Schema for trip-data.json — the single source of truth for a travel plan. All skills read from and write to this file.",
+  "type": "object",
+  "required": ["destination", "origin", "dates", "travelers", "preferences", "flights", "hotels", "restaurants", "attractions", "itinerary", "notes"],
+  "additionalProperties": true,
+  "_schema_notes": "This schema is extensible. When the user asks to research something new (car rentals, events, spa, etc.), add a new top-level property here and a corresponding $defs type. Always update the schema BEFORE adding new data to trip-data.json.",
+  "properties": {
+    "destination": {
+      "type": "string",
+      "description": "Primary destination city/region"
+    },
+    "origin": {
+      "type": "string",
+      "description": "Origin airport code (e.g., SEA)"
+    },
+    "dates": {
+      "type": "object",
+      "required": ["depart", "return", "duration_days"],
+      "properties": {
+        "depart": { "type": "string", "format": "date", "description": "YYYY-MM-DD" },
+        "return": { "type": "string", "format": "date", "description": "YYYY-MM-DD" },
+        "duration_days": { "type": "integer" }
+      }
+    },
+    "travelers": {
+      "type": "object",
+      "required": ["adults", "children"],
+      "properties": {
+        "adults": { "type": "integer" },
+        "children": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "description": "Array of children's ages"
+        },
+        "names": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Optional traveler names"
+        }
+      }
+    },
+    "preferences": {
+      "type": "object",
+      "properties": {
+        "flights": {
+          "type": "object",
+          "properties": {
+            "class": { "type": "string", "enum": ["economy", "premium_economy", "business", "first"] },
+            "nonstop": { "type": "boolean" },
+            "time_preference": { "type": ["string", "null"], "description": "e.g., 'no early morning', 'afternoon preferred'" },
+            "airline_preference": { "type": ["string", "null"] }
+          }
+        },
+        "hotels": {
+          "type": "object",
+          "properties": {
+            "budget_per_night": { "type": ["number", "null"] },
+            "star_rating": { "type": ["integer", "null"] },
+            "amenities": { "type": "array", "items": { "type": "string" } },
+            "type": { "type": ["string", "null"], "description": "e.g., 'suite', 'airbnb', 'resort'" },
+            "neighborhood": { "type": ["string", "null"] }
+          }
+        },
+        "food": {
+          "type": "object",
+          "properties": {
+            "cuisines": { "type": "array", "items": { "type": "string" } },
+            "dietary": { "type": "array", "items": { "type": "string" } },
+            "budget_level": { "type": ["string", "null"], "description": "$, $$, $$$, $$$$" },
+            "interests": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "excursions": {
+          "type": "object",
+          "properties": {
+            "interests": { "type": "array", "items": { "type": "string" } },
+            "pace": { "type": "string", "enum": ["relaxed", "moderate", "packed"] }
+          }
+        },
+        "budget_total": { "type": ["number", "null"] }
+      }
+    },
+    "flights": {
+      "type": "object",
+      "required": ["search_url", "outbound", "return", "selected"],
+      "properties": {
+        "search_url": { "type": ["string", "null"], "description": "Kayak search URL used" },
+        "outbound": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/FlightOption" }
+        },
+        "return": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/FlightOption" }
+        },
+        "selected": {
+          "type": ["object", "null"],
+          "properties": {
+            "outbound": { "$ref": "#/$defs/FlightOption" },
+            "return": { "$ref": "#/$defs/FlightOption" },
+            "total_price": { "type": "number" }
+          }
+        }
+      }
+    },
+    "hotels": {
+      "type": "object",
+      "required": ["search_urls", "options", "selected"],
+      "properties": {
+        "search_urls": {
+          "type": "object",
+          "description": "Keyed by source (kayak, airbnb, etc.)",
+          "additionalProperties": { "type": "string" }
+        },
+        "options": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/HotelOption" }
+        },
+        "selected": { "type": ["object", "null"], "$ref": "#/$defs/HotelOption" }
+      }
+    },
+    "restaurants": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Restaurant" }
+    },
+    "attractions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Attraction" }
+    },
+    "itinerary": {
+      "type": "object",
+      "description": "Keyed by 'day1', 'day2', etc.",
+      "additionalProperties": { "$ref": "#/$defs/ItineraryDay" }
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "FlightOption": {
+      "type": "object",
+      "required": ["airline", "depart_time", "arrive_time", "duration", "stops", "price_per_person"],
+      "properties": {
+        "airline": { "type": "string" },
+        "flight_number": { "type": ["string", "null"] },
+        "depart_time": { "type": "string", "description": "HH:MM AM/PM" },
+        "arrive_time": { "type": "string", "description": "HH:MM AM/PM, +1 if next day" },
+        "duration": { "type": "string", "description": "e.g., '2h 09m'" },
+        "stops": { "type": "integer" },
+        "price_per_person": { "type": "number" },
+        "price_total": { "type": ["number", "null"] },
+        "class": { "type": "string" },
+        "booking_url": { "type": ["string", "null"] }
+      }
+    },
+    "HotelOption": {
+      "type": "object",
+      "required": ["name", "location", "price_per_night"],
+      "properties": {
+        "name": { "type": "string" },
+        "location": { "type": "string", "description": "Neighborhood or area" },
+        "star_rating": { "type": ["number", "null"] },
+        "guest_rating": { "type": ["number", "null"], "description": "Out of 10 (Kayak) or 5 (TripAdvisor)" },
+        "guest_rating_source": { "type": ["string", "null"] },
+        "review_count": { "type": ["integer", "null"] },
+        "price_per_night": { "type": "number" },
+        "price_total": { "type": ["number", "null"] },
+        "amenities": { "type": "array", "items": { "type": "string" } },
+        "room_type": { "type": ["string", "null"], "description": "e.g., 'suite', 'studio', 'standard'" },
+        "review_summary": { "type": ["string", "null"], "description": "Brief summary of review highlights" },
+        "booking_urls": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Keyed by source: kayak, booking_com, hilton, marriott, airbnb, etc."
+        },
+        "tripadvisor_url": { "type": ["string", "null"] }
+      }
+    },
+    "Restaurant": {
+      "type": "object",
+      "required": ["name", "cuisine"],
+      "properties": {
+        "name": { "type": "string" },
+        "cuisine": { "type": "string" },
+        "price_level": { "type": ["string", "null"], "description": "$, $$, $$$, $$$$" },
+        "rating": { "type": ["number", "null"] },
+        "review_count": { "type": ["integer", "null"] },
+        "highlights": { "type": ["string", "null"], "description": "What to order, what reviewers love" },
+        "address": { "type": ["string", "null"] },
+        "neighborhood": { "type": ["string", "null"] },
+        "best_for": { "type": ["string", "null"], "description": "e.g., 'family dinner', 'quick lunch'" },
+        "tripadvisor_url": { "type": ["string", "null"] }
+      }
+    },
+    "Attraction": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "description": "e.g., 'museum', 'park', 'landmark', 'zoo'" },
+        "rating": { "type": ["number", "null"] },
+        "review_count": { "type": ["integer", "null"] },
+        "price": { "type": ["string", "null"], "description": "e.g., 'free', '$15/adult', '$$'" },
+        "hours": { "type": ["string", "null"] },
+        "duration": { "type": ["string", "null"], "description": "Suggested visit time, e.g., '2-3 hours'" },
+        "highlights": { "type": ["string", "null"] },
+        "family_friendly": { "type": "boolean" },
+        "stroller_friendly": { "type": "boolean" },
+        "drive_time_from_hotel": { "type": ["string", "null"] },
+        "tripadvisor_url": { "type": ["string", "null"] }
+      }
+    },
+    "ItineraryDay": {
+      "type": "object",
+      "required": ["date", "theme", "activities"],
+      "properties": {
+        "date": { "type": "string", "format": "date" },
+        "theme": { "type": "string", "description": "e.g., 'Zoo & Natural History', 'Arrival Day'" },
+        "subtitle": { "type": ["string", "null"] },
+        "is_flight_day": { "type": "boolean" },
+        "activities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "time": { "type": ["string", "null"], "description": "e.g., 'Morning', '10:00 AM', 'Afternoon'" },
+              "name": { "type": "string" },
+              "detail": { "type": ["string", "null"] },
+              "tags": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "e.g., ['stroller-ok', '30-min-drive', 'flight', 'all-day']"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

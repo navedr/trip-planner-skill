@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /Users/narangwa/dev/playground/travel-planner/.claude/skills/attractions/references)",
+      "Bash(mkdir -p /Users/narangwa/dev/playground/travel-planner/.claude/skills/hotels/references)",
+      "Bash(mkdir -p /Users/narangwa/dev/playground/travel-planner/.claude/skills/restaurants/references)",
+      "Bash(mkdir -p /Users/narangwa/dev/playground/travel-planner/.claude/skills/flights/references)"
+    ]
+  }
+}
