@@ -14,7 +14,7 @@ export function TopNav() {
   const location = useLocation();
 
   return (
-    <header className="glass sticky top-0 z-40 border-b border-border/50">
+    <header className="glass sticky top-0 z-40 border-b border-border/50 hidden lg:flex lg:flex-col">
       <div className="flex h-16 items-center justify-between px-6">
         {/* Logo */}
         <Link to="/trips" className="flex items-center gap-2.5">

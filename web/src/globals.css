@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "konsta/react/theme.css";
 
 /* ── Luxury Travel Editorial Theme ── */
 
@@ -88,12 +89,18 @@
   border-color: hsl(var(--border));
 }
 
+html,
+body {
+  overflow-x: hidden;
+}
+
 body {
   font-family: var(--font-body);
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ── Typography ── */
@@ -153,4 +160,39 @@ h1, h2, h3, h4, h5, h6 {
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(217 25% 40%);
+}
+
+/* ── Konsta UI Theme Overrides ── */
+
+/* Neutralize Konsta's .dark background override — our body rule handles it */
+.dark {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* Override iOS dark surface colors to match our dark navy/slate theme */
+@theme inline {
+  --color-brand-primary: #c2703e;
+  --color-ios-dark-surface: hsl(222.2, 47.4%, 11.2%);
+  --color-ios-dark-surface-1: hsl(217.2, 32.6%, 17.5%);
+  --color-ios-dark-surface-1-shade: hsl(222.2, 47.4%, 9%);
+  --color-ios-dark-surface-1-tint: hsl(217, 25%, 30%);
+  --color-ios-dark-surface-2: hsl(222.2, 47.4%, 13%);
+  --color-ios-dark-surface-3: hsl(217.2, 32.6%, 17.5%);
+  --color-ios-dark-surface-variant: hsl(217.2, 32.6%, 20%);
+  --font-ios: "Outfit", "Helvetica Neue", sans-serif;
+}
+
+/* Glassmorphism on Konsta tab bar + popup navbar */
+.k-ios [class*="k-tabbar"],
+.k-ios [class*="k-navbar"] {
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+/* Safe area padding for standalone PWA */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .k-safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }

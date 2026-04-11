@@ -14,7 +14,7 @@ export function ChatInput() {
   const adjustHeight = useCallback(() => {
     const el = textareaRef.current;
     if (!el) return;
-    el.style.height = "auto";
+    el.style.height = "36px";
     el.style.height = Math.min(el.scrollHeight, 160) + "px";
   }, []);
 
@@ -59,7 +59,7 @@ export function ChatInput() {
       : "Ask about your trip...";
 
   return (
-    <div className="border-t border-border/30 p-3">
+    <div className="flex-none border-t border-border/30 p-3">
       {!isOnline && (
         <div className="mb-2 flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-1.5 text-xs text-destructive">
           <WifiOff className="h-3 w-3" />

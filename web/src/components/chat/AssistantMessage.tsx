@@ -2,6 +2,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Compass } from "lucide-react";
 import type { ChatMessage } from "@/contexts/ChatContext";
+import { formatTimestamp } from "@/lib/time";
 
 interface AssistantMessageProps {
   message: ChatMessage;
@@ -9,11 +10,12 @@ interface AssistantMessageProps {
 
 export function AssistantMessage({ message }: AssistantMessageProps) {
   return (
-    <div className="flex gap-2.5">
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-        <Compass className="h-3.5 w-3.5 text-primary" />
-      </div>
-      <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md bg-card/80 px-4 py-2.5">
+    <div className="flex flex-col gap-1">
+      <div className="flex gap-2.5">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+          <Compass className="h-3.5 w-3.5 text-primary" />
+        </div>
+        <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md bg-card/80 px-4 py-2.5">
         <div className="prose-chat text-sm leading-relaxed">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
@@ -72,7 +74,11 @@ export function AssistantMessage({ message }: AssistantMessageProps) {
             {message.content}
           </ReactMarkdown>
         </div>
+        </div>
       </div>
+      <span className="ml-9.5 text-[10px] text-muted-foreground/50">
+        {formatTimestamp(message.timestamp)}
+      </span>
     </div>
   );
 }

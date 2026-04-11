@@ -131,7 +131,7 @@ export function TripDetailPage() {
           <Tabs defaultValue="itinerary" className="mt-2">
             <TabsList
               variant="line"
-              className="mb-5 w-full justify-start overflow-x-auto"
+              className="mb-5 w-full justify-start overflow-x-auto [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
               <TabsTrigger value="itinerary">
                 <CalendarDays className="h-3.5 w-3.5" />
