@@ -73,7 +73,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             id: r.id,
             role: r.role as ChatMessage["role"],
             content: r.content,
-            timestamp: new Date(r.created_at).getTime(),
+            timestamp: new Date(r.created_at.endsWith("Z") ? r.created_at : r.created_at + "Z").getTime(),
           })),
         );
       })

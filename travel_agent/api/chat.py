@@ -68,7 +68,7 @@ def _make_sse(event: str, data: dict) -> str:
 def _build_agent(user: User, trip_id: str | None, db: Session) -> TravelAgent:
     """Build a TravelAgent from user settings or env defaults."""
     # Determine provider/key/model
-    provider_type = user.llm_provider or os.environ.get("LLM_PROVIDER", "openai")
+    provider_type = user.llm_provider or os.environ.get("LLM_PROVIDER") or os.environ.get("DEFAULT_LLM_PROVIDER") or "openai"
     model = user.llm_model or os.environ.get("MODEL") or None
     base_url = os.environ.get("BASE_URL") or None
     api_version = os.environ.get("API_VERSION") or None
