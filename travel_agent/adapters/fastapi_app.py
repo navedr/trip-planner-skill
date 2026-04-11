@@ -69,12 +69,6 @@ app.include_router(itinerary_router)
 app.include_router(settings_router)
 app.include_router(chat_router)
 
-# Serve frontend static files if built
-_web_dist = Path("web/dist")
-if _web_dist.exists():
-    from fastapi.staticfiles import StaticFiles
-    app.mount("/", StaticFiles(directory=str(_web_dist), html=True), name="frontend")
-
 # ---------------------------------------------------------------------------
 # Startup: build a default agent from env vars (used when request doesn't
 # supply its own credentials).
@@ -285,3 +279,12 @@ def refresh(req: RefreshRequest, db: Session = Depends(get_db)):
 @app.get("/api/auth/me", response_model=UserResponse)
 def me(current_user: User = Depends(get_current_user)):
     return UserResponse(**_user_response(current_user))
+
+
+# ---------------------------------------------------------------------------
+# Serve frontend static files (MUST be last — catch-all mount)
+# ---------------------------------------------------------------------------
+_web_dist = Path("web/dist")
+if _web_dist.exists():
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/", StaticFiles(directory=str(_web_dist), html=True), name="frontend")
