@@ -1,0 +1,20 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - db-data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:///./data/travel_planner.db
+      - JWT_SECRET=${JWT_SECRET}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY:-}
+      - SELENIUM_GRID_URL=${SELENIUM_GRID_URL:-http://host.docker.internal:4444}
+      - DEFAULT_LLM_PROVIDER=${DEFAULT_LLM_PROVIDER:-}
+      - DEFAULT_API_KEY=${DEFAULT_API_KEY:-}
+      - DEFAULT_MODEL=${DEFAULT_MODEL:-}
+    restart: unless-stopped
+
+volumes:
+  db-data:

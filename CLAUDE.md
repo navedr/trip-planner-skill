@@ -30,7 +30,7 @@ The `travel_agent/` package is a model & platform agnostic agent:
 ```
 travel_agent/
   agent.py            # Core TravelAgent class — tool-use loop, search vs plan mode
-  llm_provider.py     # OpenAIProvider + AnthropicProvider + make_provider()
+  llm_provider.py     # OpenAIProvider + AzureOpenAIProvider + AnthropicProvider + make_provider()
   system_prompt.py    # Reads from .claude/skills/ (shared source of truth)
   tool_registry.py    # 12 tool schemas + execute_tool() dispatcher
   tools/              # Selenium search tools + trip state CRUD + HTML generator
@@ -48,7 +48,7 @@ uvicorn travel_agent.adapters.fastapi_app:app
 # OpenWebUI — paste adapters/openwebui_pipe.py into Admin > Functions
 ```
 
-**Config (env vars or OpenWebUI Valves):** `LLM_PROVIDER`, `API_KEY`, `MODEL`, `REASONING_EFFORT` (default: medium), `SELENIUM_GRID_URL`, `PLANS_DIR`
+**Config (env vars or OpenWebUI Valves):** `LLM_PROVIDER` (openai | azure_openai | anthropic), `API_KEY`, `MODEL`, `BASE_URL`, `API_VERSION` (Azure only), `REASONING_EFFORT` (default: medium), `SELENIUM_GRID_URL`, `PLANS_DIR`
 
 ### Search vs Plan Mode
 

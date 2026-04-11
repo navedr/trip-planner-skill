@@ -1,0 +1,15 @@
+node_modules
+__pycache__
+*.pyc
+.git
+.gitignore
+plans/
+.superpowers/
+web/node_modules
+web/dist
+.env
+.env.*
+!.env.example
+*.db
+data/
+.claude/scheduled_tasks.lock

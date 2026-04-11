@@ -42,7 +42,7 @@ class LLMProvider(ABC):
 
 
 class OpenAIProvider:
-    """Uses the openai SDK."""
+    """Uses the openai SDK (also serves as base for AzureOpenAIProvider)."""
 
     def __init__(
         self, api_key: str, model: str = "gpt-5", base_url: str | None = None,
@@ -165,6 +165,32 @@ class OpenAIProvider:
             }
             for result in tool_results
         ]
+
+
+class AzureOpenAIProvider(OpenAIProvider):
+    """Azure-hosted OpenAI. Same API shape, different client constructor.
+
+    The ``model`` parameter maps to the Azure **deployment name**.
+    """
+
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "gpt-4o",
+        azure_endpoint: str | None = None,
+        api_version: str = "2024-12-01-preview",
+        reasoning_effort: str = "medium",
+    ):
+        import openai
+
+        # Skip OpenAIProvider.__init__ — we construct the client ourselves
+        self.client = openai.AzureOpenAI(
+            api_key=api_key,
+            azure_endpoint=azure_endpoint or "",
+            api_version=api_version,
+        )
+        self.model = model  # deployment name
+        self.reasoning_effort = reasoning_effort
 
 
 class AnthropicProvider:
@@ -298,11 +324,27 @@ def make_provider(
     model: str | None = None,
     base_url: str | None = None,
     reasoning_effort: str = "medium",
+    api_version: str | None = None,
 ) -> LLMProvider:
-    """Factory function."""
+    """Factory function.
+
+    ``provider_type`` is one of: ``"openai"``, ``"azure_openai"``, ``"anthropic"``.
+
+    For Azure OpenAI, ``base_url`` is the Azure resource endpoint
+    (e.g. ``https://my-resource.openai.azure.com``), and ``model`` is the
+    deployment name.
+    """
     if provider_type == "openai":
         return OpenAIProvider(
             api_key=api_key, model=model or "gpt-5", base_url=base_url,
+            reasoning_effort=reasoning_effort,
+        )
+    elif provider_type == "azure_openai":
+        return AzureOpenAIProvider(
+            api_key=api_key,
+            model=model or "gpt-4o",
+            azure_endpoint=base_url,
+            api_version=api_version or "2024-12-01-preview",
             reasoning_effort=reasoning_effort,
         )
     elif provider_type == "anthropic":
@@ -310,4 +352,4 @@ def make_provider(
             api_key=api_key, model=model or "claude-sonnet-4-20250514"
         )
     else:
-        raise ValueError(f"Unknown provider: {provider_type}")
+        raise ValueError(f"Unknown provider: {provider_type}. Supported: openai, azure_openai, anthropic")

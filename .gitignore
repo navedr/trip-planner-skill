@@ -8,3 +8,27 @@ plans/
 __pycache__/
 *.pyc
 *.pyo
+*.egg-info/
+dist/
+venv/
+
+# Environment
+.env
+
+# Node / Frontend
+web/node_modules/
+web/dist/
+web/.vite/
+
+# SQLite
+data/
+*.db
+
+# Docker
+db-data/
+
+# Superpowers brainstorming
+.superpowers/
+
+# OS
+.DS_Store

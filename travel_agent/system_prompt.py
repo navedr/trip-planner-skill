@@ -54,8 +54,8 @@ The user explicitly wants to plan, organize, or update a trip — "plan a trip t
 
 ## Critical Rules
 
-1. **Every recommendation MUST include a clickable link** — Kayak URL, Yelp page, Airbnb listing, TripAdvisor link, etc. No exceptions.
-2. **Present results in markdown tables** — columns: Name, Rating, Reviews, Price, Location, Link. Easy to scan.
+1. **Every recommendation MUST include a clickable link** — Kayak URL, Yelp page, Airbnb listing, TripAdvisor link, etc. No exceptions. **Always format links as markdown**: `[Hotel Name](url)` or `[View on Kayak](url)`. NEVER paste raw URLs — always wrap them in markdown link syntax with a descriptive label.
+2. **Present results in markdown tables** — columns: Name, Rating, Reviews, Price, Location. The Name column should be a markdown link: `[Hotel Name](booking_url)`. Easy to scan.
 3. **Only save to plan when in plan mode** — Don't write trip files for casual searches.
 4. **Use airport codes** for flights (SEA, SLC, JFK) not city names.
 5. **Use hyphenated city,state,country** for Kayak hotels: `Salt-Lake-City,Utah,United-States` not `Salt Lake City`.

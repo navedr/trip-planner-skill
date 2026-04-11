@@ -511,8 +511,21 @@ def _dispatch(name: str, args: dict, config: dict) -> Any:
         )
 
     # -- Trip state tools --
+    # When storage_backend == "sqlite", dispatch to SQLiteTripStorage instance.
+    # Otherwise (default), use filesystem functions for CLI/OpenWebUI compatibility.
+
+    storage = config.get("storage_instance") if config.get("storage_backend") == "sqlite" else None
 
     if name == "create_trip":
+        if storage:
+            trip_id = storage.create_trip(
+                destination=args["destination"],
+                origin=args.get("origin", ""),
+                dates=args.get("dates", {}),
+                travelers=args.get("travelers", {}),
+                preferences=args.get("preferences", {}),
+            )
+            return {"plan_dir": trip_id}
         plan_dir = trip_state.create_trip(
             destination=args["destination"],
             origin=args.get("origin", ""),
@@ -524,29 +537,50 @@ def _dispatch(name: str, args: dict, config: dict) -> Any:
         return {"plan_dir": plan_dir}
 
     if name == "load_trip":
+        if storage:
+            return storage.load_trip(plan_dir=args["plan_dir"])
         return trip_state.load_trip(plan_dir=args["plan_dir"])
 
     if name == "save_trip":
-        trip_state.save_trip(plan_dir=args["plan_dir"], data=args["data"])
+        if storage:
+            storage.save_trip(plan_dir=args["plan_dir"], data=args["data"])
+        else:
+            trip_state.save_trip(plan_dir=args["plan_dir"], data=args["data"])
         return {"status": "saved", "plan_dir": args["plan_dir"]}
 
     if name == "update_trip":
-        trip_state.update_section(
-            plan_dir=args["plan_dir"],
-            section=args["section"],
-            data=args["data"],
-        )
+        if storage:
+            storage.update_section(
+                plan_dir=args["plan_dir"],
+                section=args["section"],
+                data=args["data"],
+            )
+        else:
+            trip_state.update_section(
+                plan_dir=args["plan_dir"],
+                section=args["section"],
+                data=args["data"],
+            )
         return {"status": "updated", "plan_dir": args["plan_dir"], "section": args["section"]}
 
     if name == "list_plans":
+        if storage:
+            return storage.list_plans()
         return trip_state.list_plans(plans_dir=args.get("plans_dir", plans_dir))
 
     if name == "finalize_selection":
-        trip_state.finalize_selection(
-            plan_dir=args["plan_dir"],
-            category=args["category"],
-            selected_data=args["selected_data"],
-        )
+        if storage:
+            storage.finalize_selection(
+                plan_dir=args["plan_dir"],
+                category=args["category"],
+                selected_data=args["selected_data"],
+            )
+        else:
+            trip_state.finalize_selection(
+                plan_dir=args["plan_dir"],
+                category=args["category"],
+                selected_data=args["selected_data"],
+            )
         return {"status": "finalized", "plan_dir": args["plan_dir"], "category": args["category"]}
 
     if name == "generate_html_plan":

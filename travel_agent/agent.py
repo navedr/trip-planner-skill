@@ -31,8 +31,12 @@ class TravelAgent:
     @property
     def system_prompt(self) -> str:
         """Build system prompt with current plan context appended."""
-        from .tools.trip_state import list_plans
-        plans = list_plans(self.config["plans_dir"])
+        storage = self.config.get("storage_instance") if self.config.get("storage_backend") == "sqlite" else None
+        if storage:
+            plans = storage.list_plans()
+        else:
+            from .tools.trip_state import list_plans
+            plans = list_plans(self.config["plans_dir"])
         if not plans:
             return self._base_system_prompt
 

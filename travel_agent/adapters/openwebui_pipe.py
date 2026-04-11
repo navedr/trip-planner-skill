@@ -15,12 +15,15 @@ from pydantic import BaseModel, Field
 
 class Valves(BaseModel):
     llm_provider: str = Field(
-        default="openai", description="LLM provider: 'openai' or 'anthropic'"
+        default="openai", description="LLM provider: 'openai', 'azure_openai', or 'anthropic'"
     )
     api_key: str = Field(default="", description="API key for the LLM provider")
-    model: str = Field(default="gpt-5", description="Model name")
+    model: str = Field(default="gpt-5", description="Model name (or Azure deployment name)")
     base_url: str = Field(
-        default="", description="Optional base URL for OpenAI-compatible endpoints"
+        default="", description="Base URL override (openai) or Azure resource endpoint (azure_openai)"
+    )
+    api_version: str = Field(
+        default="", description="Azure OpenAI API version (e.g. 2024-12-01-preview)"
     )
     reasoning_effort: str = Field(
         default="medium", description="Reasoning effort: 'low', 'medium', 'high' (OpenAI models)"
@@ -50,6 +53,7 @@ class Pipe:
                 self.valves.model,
                 self.valves.base_url or None,
                 reasoning_effort=self.valves.reasoning_effort,
+                api_version=self.valves.api_version or None,
             )
             self._agent = TravelAgent(
                 provider=provider,
