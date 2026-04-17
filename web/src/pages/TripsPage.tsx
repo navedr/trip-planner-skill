@@ -37,7 +37,7 @@ export function TripsPage() {
 
         {/* Loading skeletons */}
         {showSkeletons && (
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-5 [grid-template-columns:repeat(auto-fill,minmax(320px,1fr))]">
             {Array.from({ length: 3 }).map((_, i) => (
               <TripCardSkeleton key={i} />
             ))}
@@ -52,7 +52,7 @@ export function TripsPage() {
                 Showing preview data — connect the backend API for live trips
               </p>
             )}
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-5 [grid-template-columns:repeat(auto-fill,minmax(320px,1fr))]">
               {trips.map((trip, i) => (
                 <TripCard key={trip.id} trip={trip} index={i} />
               ))}

@@ -282,9 +282,24 @@ def me(current_user: User = Depends(get_current_user)):
 
 
 # ---------------------------------------------------------------------------
-# Serve frontend static files (MUST be last — catch-all mount)
+# Serve frontend static files + SPA fallback (MUST be last)
 # ---------------------------------------------------------------------------
 _web_dist = Path("web/dist")
 if _web_dist.exists():
     from fastapi.staticfiles import StaticFiles
-    app.mount("/", StaticFiles(directory=str(_web_dist), html=True), name="frontend")
+    from fastapi.responses import FileResponse
+
+    # Serve actual static assets (JS, CSS, icons, SW, manifest)
+    app.mount("/assets", StaticFiles(directory=str(_web_dist / "assets")), name="assets")
+    app.mount("/icons", StaticFiles(directory=str(_web_dist / "icons")), name="icons")
+
+    _static_files = {"sw.js", "registerSW.js", "workbox-4b126c97.js", "manifest.webmanifest"}
+    _index_html = _web_dist / "index.html"
+
+    @app.get("/{path:path}")
+    async def spa_fallback(path: str):
+        # Serve known static files from dist root
+        if path in _static_files:
+            return FileResponse(_web_dist / path)
+        # Everything else gets index.html (SPA client-side routing)
+        return FileResponse(_index_html)

@@ -1,8 +1,8 @@
 services:
   app:
-    build: .
+    image: ghcr.io/navedr/trip-planner-skill:latest
     ports:
-      - "8000:8000"
+      - "8076:8000"
     volumes:
       - db-data:/app/data
     environment:
@@ -10,7 +10,12 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY:-}
-      - SELENIUM_GRID_URL=${SELENIUM_GRID_URL:-http://host.docker.internal:4444}
+      - SELENIUM_GRID_URL=${SELENIUM_GRID_URL:-http://192.168.68.168:4444}
+      - LLM_PROVIDER=${LLM_PROVIDER:-}
+      - API_KEY=${API_KEY:-}
+      - BASE_URL=${BASE_URL:-}
+      - MODEL=${MODEL:-}
+      - API_VERSION=${API_VERSION:-}
       - DEFAULT_LLM_PROVIDER=${DEFAULT_LLM_PROVIDER:-}
       - DEFAULT_API_KEY=${DEFAULT_API_KEY:-}
       - DEFAULT_MODEL=${DEFAULT_MODEL:-}

@@ -82,6 +82,24 @@ plans/slc-may-2026/
 
 `trip-data.json` is compact and token-efficient. Skills/tools read/write specific fields without parsing. When a flight is booked, clearing the options array keeps the file small. The HTML is the human-readable output.
 
+## Docker Deployment
+
+Image: `ghcr.io/navedr/trip-planner-skill` (multi-platform: amd64 + arm64, public)
+
+**Build & push:**
+```bash
+docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 \
+  -t ghcr.io/navedr/trip-planner-skill:latest --push .
+```
+
+**Production (butler — 192.168.68.168):**
+```bash
+ssh 192.168.68.168 "cd ~/docker/trip-planner && docker compose pull && docker compose up -d"
+```
+- Compose + `.env` live at `~/docker/trip-planner/` on butler
+- Exposed on port **8076**
+- Uses `multiarch` buildx builder (created with `docker buildx create --name multiarch`)
+
 ## Browser Automation
 
 ### 1. Selenium Grid (default)

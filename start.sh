@@ -26,6 +26,7 @@ fi
 echo "Starting FastAPI on :8000 ..."
 "$ROOT/venv/bin/uvicorn" travel_agent.adapters.fastapi_app:app \
   --host 0.0.0.0 --port 8000 --reload \
+  --reload-dir "$ROOT/travel_agent" \
   --app-dir "$ROOT" &
 API_PID=$!
 

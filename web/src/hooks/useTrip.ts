@@ -54,12 +54,22 @@ export function useTripItems<C extends TripItemCategory>(
         `/trips/${tripId}/items?category=${category}`,
       );
       // Unwrap: merge data_json fields + id/is_selected onto a flat object
-      return raw.map((item) => ({
-        ...item.data,
-        id: item.id,
-        is_selected: item.is_selected,
-        source_url: item.source_url,
-      })) as unknown as ItemMap[C];
+      return raw.map((item) => {
+        const data = (item.data ?? {}) as Record<string, unknown>;
+        // Hotels store multiple booking sources as a dict (kayak, booking_com, ...).
+        // Flatten to a single booking_url so HotelCard renders a link.
+        if (category === "hotel" && !data.booking_url) {
+          const urls = data.booking_urls as Record<string, string> | undefined;
+          const first = urls ? Object.values(urls)[0] : undefined;
+          data.booking_url = first ?? item.source_url ?? null;
+        }
+        return {
+          ...data,
+          id: item.id,
+          is_selected: item.is_selected,
+          source_url: item.source_url,
+        };
+      }) as unknown as ItemMap[C];
     },
     enabled: !!tripId,
     placeholderData: placeholder as any,

@@ -10,17 +10,21 @@ export function ChatInput() {
   const isOnline = useOnline();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize textarea
+  // Auto-resize textarea. When empty, clear inline height so the CSS
+  // `min-h-[36px]` collapses to one row. Measuring `scrollHeight` while
+  // the parent panel is mid-animation (width: 0) wraps the placeholder
+  // vertically and gives a bogus 160px — skipping the measurement when
+  // there's no value avoids that.
   const adjustHeight = useCallback(() => {
     const el = textareaRef.current;
     if (!el) return;
-    el.style.height = "36px";
+    if (!el.value) {
+      el.style.height = "";
+      return;
+    }
+    el.style.height = "auto";
     el.style.height = Math.min(el.scrollHeight, 160) + "px";
   }, []);
-
-  useEffect(() => {
-    adjustHeight();
-  }, [adjustHeight]);
 
   // Consume prefilled input from context (e.g. search quick-filters)
   useEffect(() => {
@@ -39,7 +43,7 @@ export function ChatInput() {
     if (!value || isStreaming || !isOnline) return;
     sendMessage(value);
     el.value = "";
-    el.style.height = "auto";
+    el.style.height = "";
   }, [isStreaming, isOnline, sendMessage]);
 
   const handleKeyDown = useCallback(
