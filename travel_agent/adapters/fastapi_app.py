@@ -50,6 +50,31 @@ from travel_agent.api.chat import router as chat_router
 from travel_agent.api.notifications import router as notifications_router
 
 
+def _run_migrations() -> None:
+    """Apply Alembic migrations at startup.
+
+    - If alembic_version already exists, run `upgrade head`.
+    - Otherwise (fresh DB, or legacy DB seeded via `create_all`), seed any
+      still-missing tables with `create_all` and stamp to head so future
+      migrations apply from the next revision forward.
+
+    Caveat: this auto-stamp path is safe only for additive schema changes.
+    A migration that renames columns or backfills data must be run manually
+    against legacy DBs before the next deploy.
+    """
+    from alembic import command
+    from alembic.config import Config
+    from sqlalchemy import inspect
+
+    alembic_cfg = Config(str(Path(__file__).resolve().parents[2] / "alembic.ini"))
+
+    if "alembic_version" in inspect(engine).get_table_names():
+        command.upgrade(alembic_cfg, "head")
+    else:
+        Base.metadata.create_all(bind=engine)
+        command.stamp(alembic_cfg, "head")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Create data directory for SQLite if needed
@@ -57,7 +82,7 @@ async def lifespan(app: FastAPI):
     if db_url.startswith("sqlite:///./"):
         db_dir = Path(db_url.replace("sqlite:///./", "")).parent
         db_dir.mkdir(parents=True, exist_ok=True)
-    Base.metadata.create_all(bind=engine)
+    _run_migrations()
     yield
 
 
