@@ -118,3 +118,20 @@ class SettingsUpdate(BaseModel):
     llm_api_key: str | None = None  # plaintext — encrypted before storage
     name: str | None = None
     notifications_enabled: bool | None = None
+
+
+# ---------------------------------------------------------------------------
+# Weather
+# ---------------------------------------------------------------------------
+
+class DayWeather(BaseModel):
+    date: str
+    temp_high_f: float
+    temp_low_f: float
+    condition_code: int
+    condition_label: str
+    condition_emoji: str
+    precipitation_in: float
+    wind_mph: float
+    sunrise: str
+    sunset: str

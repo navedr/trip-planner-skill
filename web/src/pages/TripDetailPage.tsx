@@ -17,12 +17,15 @@ import { Button } from "@/components/ui/button";
 import { getDestinationPalette } from "@/lib/theme";
 import { useTrip, useTripItems, useItinerary } from "@/hooks/useTrip";
 import { useDeleteItem } from "@/hooks/useTripItems";
+import { useTripWeather } from "@/hooks/useTripWeather";
+import { useOfflineWarmup } from "@/hooks/useOfflineWarmup";
 import { TripTimeline } from "@/components/trip-detail/TripTimeline";
 import { FlightsTab } from "@/components/trip-detail/FlightsTab";
 import { HotelsTab } from "@/components/trip-detail/HotelsTab";
 import { RestaurantsTab } from "@/components/trip-detail/RestaurantsTab";
 import { AttractionsTab } from "@/components/trip-detail/AttractionsTab";
 import { MapTab } from "@/components/trip-detail/MapTab";
+import { NearMePanel } from "@/components/trip-detail/NearMePanel";
 import { EditTripDialog } from "@/components/trips/EditTripDialog";
 
 const statusConfig = {
@@ -46,7 +49,9 @@ export function TripDetailPage() {
   const { data: restaurants = [] } = useTripItems(id, "restaurant");
   const { data: attractions = [] } = useTripItems(id, "attraction");
   const { data: itinerary = [] } = useItinerary(id);
+  const { data: weather = [] } = useTripWeather(id);
   const deleteItem = useDeleteItem(id);
+  useOfflineWarmup(id);
 
   const palette = useMemo(
     () => getDestinationPalette(trip?.destination ?? ""),
@@ -171,6 +176,7 @@ export function TripDetailPage() {
                 restaurants={restaurants}
                 attractions={attractions}
                 itinerary={itinerary}
+                weather={weather}
                 accentColor={palette.accent}
               />
             </TabsContent>
@@ -214,6 +220,9 @@ export function TripDetailPage() {
                 accentColor={palette.accent}
                 onRemoveItem={(itemId) => deleteItem.mutate(itemId)}
               />
+              <div className="mt-6">
+                <NearMePanel tripId={trip.id} accentColor={palette.accent} />
+              </div>
             </TabsContent>
           </Tabs>
         </motion.div>

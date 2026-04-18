@@ -18,6 +18,7 @@ import type {
   Restaurant,
   Attraction,
   ItineraryDay,
+  DayWeather,
 } from "@/lib/types";
 
 interface TripTimelineProps {
@@ -28,6 +29,7 @@ interface TripTimelineProps {
   attractions: Attraction[];
   itinerary: ItineraryDay[];
   accentColor: string;
+  weather?: DayWeather[];
 }
 
 export function TripTimeline({
@@ -38,6 +40,7 @@ export function TripTimeline({
   attractions,
   itinerary,
   accentColor,
+  weather,
 }: TripTimelineProps) {
   const selectedFlights = flights.filter((f) => f.is_selected);
   const selectedHotel = hotels.find((h) => h.is_selected);
@@ -54,6 +57,7 @@ export function TripTimeline({
         restaurants={restaurants}
         attractions={attractions}
         accentColor={accentColor}
+        weather={weather}
       />
     );
   }
@@ -77,6 +81,7 @@ function ItineraryTimeline({
   flights,
   hotel,
   accentColor,
+  weather,
 }: {
   trip: Trip;
   itinerary: ItineraryDay[];
@@ -85,6 +90,7 @@ function ItineraryTimeline({
   restaurants: Restaurant[];
   attractions: Attraction[];
   accentColor: string;
+  weather?: DayWeather[];
 }) {
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-1">
@@ -101,6 +107,7 @@ function ItineraryTimeline({
         const getDirection = (f: FlightOption) => (f as any).direction ?? (f as any)._direction;
         const arrivalFlight = isFirst ? flights.find((f) => getDirection(f) === "outbound") : undefined;
         const departureFlight = isLast ? flights.find((f) => getDirection(f) === "return") : undefined;
+        const dayWeather = weather?.find((w) => w.date === day.date);
 
         return (
           <motion.div key={day.day_number} variants={fadeUp}>
@@ -110,6 +117,7 @@ function ItineraryTimeline({
               arrivalFlight={arrivalFlight}
               departureFlight={departureFlight}
               accentColor={accentColor}
+              weather={dayWeather}
             />
           </motion.div>
         );
@@ -123,11 +131,13 @@ function DaySection({
   arrivalFlight,
   departureFlight,
   accentColor,
+  weather,
 }: {
   day: ItineraryDay;
   arrivalFlight?: FlightOption;
   departureFlight?: FlightOption;
   accentColor: string;
+  weather?: DayWeather;
 }) {
   const dateStr = new Date(day.date + "T12:00:00").toLocaleDateString("en-US", {
     weekday: "long",
@@ -149,6 +159,15 @@ function DaySection({
           <h3 className="font-display text-sm font-medium">{dateStr}</h3>
           {day.theme && (
             <p className="text-xs text-muted-foreground">{day.theme}</p>
+          )}
+          {weather && (
+            <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground">
+              <span>{weather.condition_emoji}</span>
+              <span>{Math.round(weather.temp_high_f)}° / {Math.round(weather.temp_low_f)}°</span>
+              <span>·</span>
+              <span>{weather.condition_label}</span>
+              {weather.precipitation_in > 0.04 && <span>💧</span>}
+            </span>
           )}
         </div>
         {day.is_flight_day && (

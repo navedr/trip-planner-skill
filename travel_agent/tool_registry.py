@@ -9,6 +9,7 @@ from .tools.flights import search_flights
 from .tools.hotels import search_kayak_hotels, search_airbnb
 from .tools.restaurants import search_restaurants
 from .tools.attractions import search_attractions
+from .tools.weather import get_forecast
 from .tools import trip_state
 
 # ---------------------------------------------------------------------------
@@ -224,6 +225,35 @@ TOOLS: list[dict] = [
                     },
                 },
                 "required": ["destination"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_weather_forecast",
+            "description": (
+                "Look up per-day weather forecast for a destination and date range. "
+                "Uses Open-Meteo (free, no key). Only supports dates within ~16 days from today; "
+                "returns empty forecast gracefully for farther-out dates."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "destination": {
+                        "type": "string",
+                        "description": "Destination city (e.g., 'Salt Lake City' or 'Paris, France')",
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "description": "Start date in YYYY-MM-DD format",
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "description": "End date in YYYY-MM-DD format",
+                    },
+                },
+                "required": ["destination", "start_date", "end_date"],
             },
         },
     },
@@ -508,6 +538,15 @@ def _dispatch(name: str, args: dict, config: dict) -> Any:
             destination=args["destination"],
             interest=args.get("interest"),
             grid_url=grid_url,
+        )
+
+    # -- Weather tool (no Selenium, pure HTTP) --
+
+    if name == "get_weather_forecast":
+        return get_forecast(
+            destination=args["destination"],
+            start_date=args["start_date"],
+            end_date=args["end_date"],
         )
 
     # -- Trip state tools --

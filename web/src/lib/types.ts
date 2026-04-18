@@ -139,6 +139,19 @@ export interface ItineraryDay {
 
 export type TripItemCategory = "flight" | "hotel" | "restaurant" | "attraction";
 
+export interface DayWeather {
+  date: string;
+  temp_high_f: number;
+  temp_low_f: number;
+  condition_code: number;
+  condition_label: string;
+  condition_emoji: string;
+  precipitation_in: number;
+  wind_mph: number;
+  sunrise: string;
+  sunset: string;
+}
+
 /** Shared geo fields added by backend geocoding */
 export interface GeoLocation {
   lat: number;

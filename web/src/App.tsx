@@ -9,6 +9,7 @@ import { TripDetailPage } from "@/pages/TripDetailPage";
 import { SearchPage } from "@/pages/SearchPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { OfflineBanner } from "@/components/pwa/OfflineBanner";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -29,6 +30,7 @@ export function App() {
 
   return (
     <div className="grain-overlay min-h-screen">
+      <OfflineBanner />
       <InstallPrompt />
       <AnimatePresence mode="wait">
         <Routes location={location}>

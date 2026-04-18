@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { APIProvider, Map, useMap } from "@vis.gl/react-google-maps";
-import { Loader2, MapPinOff } from "lucide-react";
+import { ExternalLink, Loader2, MapPinOff, WifiOff } from "lucide-react";
 import { useGoogleMapsKey } from "@/hooks/useGoogleMapsKey";
 import { useMapItems } from "@/hooks/useTrip";
 import { useClientGeocode } from "@/hooks/useClientGeocode";
+import { useOnline } from "@/hooks/useOnline";
 import { DaySelector } from "./DaySelector";
 import { MapMarker } from "./MapMarker";
 import { MapInfoWindow } from "./MapInfoWindow";
@@ -26,6 +27,11 @@ export function MapTab({
 }: MapTabProps) {
   const { apiKey, isLoading: keyLoading } = useGoogleMapsKey();
   const { data: mapItems = [], isLoading: itemsLoading } = useMapItems(tripId);
+  const online = useOnline();
+
+  if (!online) {
+    return <OfflineMapList mapItems={mapItems} />;
+  }
 
   if (keyLoading || itemsLoading) {
     return (
@@ -231,6 +237,68 @@ function AutoFitBounds({ items }: { items: LocatedMapItem[] }) {
   }, [map, items]);
 
   return null;
+}
+
+/* ─── Offline fallback list ─── */
+
+function OfflineMapList({ mapItems }: { mapItems: MapItem[] }) {
+  if (mapItems.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-muted/50">
+          <WifiOff className="h-5 w-5 text-muted-foreground" />
+        </div>
+        <h3 className="font-display mb-1 text-base font-medium">
+          Offline — no cached locations
+        </h3>
+        <p className="max-w-xs text-xs text-muted-foreground leading-relaxed">
+          Reconnect to load the map and your pinned places.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+        <WifiOff className="h-3.5 w-3.5" />
+        Offline — showing pinned places as a list. The map will return once you&apos;re back online.
+      </div>
+      <ul className="flex flex-col gap-2">
+        {mapItems.map((item) => {
+          const address = item.address_hint ?? item.detail ?? null;
+          const directionsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+            address ? `${item.name} ${address}` : item.name,
+          )}`;
+          return (
+            <li
+              key={item.id}
+              className="flex items-start justify-between gap-3 rounded-xl border border-border/30 bg-card/50 px-3 py-2.5"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{item.name}</p>
+                {address && (
+                  <p className="truncate text-xs text-muted-foreground">{address}</p>
+                )}
+                <p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground/70">
+                  {item.category}
+                </p>
+              </div>
+              <a
+                href={directionsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border/40 px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                Directions
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
 }
 
 /* ─── Legend dot ─── */
