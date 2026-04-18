@@ -41,26 +41,23 @@ from travel_agent.auth import (
     verify_password,
 )
 from travel_agent.db.database import engine, get_db
-from travel_agent.db.models import Base, User
+from travel_agent.db.models import User
 from travel_agent.api.trips import router as trips_router
 from travel_agent.api.items import router as items_router
 from travel_agent.api.itinerary import router as itinerary_router
 from travel_agent.api.settings import router as settings_router
 from travel_agent.api.chat import router as chat_router
 from travel_agent.api.notifications import router as notifications_router
+from travel_agent.api.weather import router as weather_router
 
 
 def _run_migrations() -> None:
     """Apply Alembic migrations at startup.
 
-    - If alembic_version already exists, run `upgrade head`.
-    - Otherwise (fresh DB, or legacy DB seeded via `create_all`), seed any
-      still-missing tables with `create_all` and stamp to head so future
-      migrations apply from the next revision forward.
-
-    Caveat: this auto-stamp path is safe only for additive schema changes.
-    A migration that renames columns or backfills data must be run manually
-    against legacy DBs before the next deploy.
+    - Fresh DB (no tables): run every migration from the start.
+    - Legacy DB (tables exist but no alembic_version): stamp to revision 001
+      (the initial schema) and then upgrade, so post-001 migrations apply.
+    - Already-migrated DB (alembic_version present): just upgrade to head.
     """
     from alembic import command
     from alembic.config import Config
@@ -68,11 +65,10 @@ def _run_migrations() -> None:
 
     alembic_cfg = Config(str(Path(__file__).resolve().parents[2] / "alembic.ini"))
 
-    if "alembic_version" in inspect(engine).get_table_names():
-        command.upgrade(alembic_cfg, "head")
-    else:
-        Base.metadata.create_all(bind=engine)
-        command.stamp(alembic_cfg, "head")
+    tables = set(inspect(engine).get_table_names())
+    if "alembic_version" not in tables and tables:
+        command.stamp(alembic_cfg, "001")
+    command.upgrade(alembic_cfg, "head")
 
 
 @asynccontextmanager
@@ -95,6 +91,7 @@ app.include_router(itinerary_router)
 app.include_router(settings_router)
 app.include_router(chat_router)
 app.include_router(notifications_router)
+app.include_router(weather_router)
 
 # ---------------------------------------------------------------------------
 # Startup: build a default agent from env vars (used when request doesn't
