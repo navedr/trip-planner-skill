@@ -10,7 +10,8 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      devOptions: { enabled: true },
+      // Disabled in dev — the SW caches JS (CacheFirst below) and masks code changes.
+      devOptions: { enabled: false },
       includeAssets: ["icons/icon-192x192.svg", "icons/icon-512x512.svg"],
       manifest: {
         name: "Voyager — Travel Planner",

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { UtensilsCrossed } from "lucide-react";
 import { RestaurantCard } from "./RestaurantCard";
+import { ClearAllButton } from "./ClearAllButton";
 import { useDeleteItem } from "@/hooks/useTripItems";
 import { stagger, fadeUp } from "@/lib/motion";
 import type { Restaurant } from "@/lib/types";
@@ -27,17 +28,26 @@ export function RestaurantsTab({ restaurants, tripId, accentColor }: Restaurants
   }
 
   return (
-    <motion.div
-      variants={stagger}
-      initial="hidden"
-      animate="show"
-      className="grid gap-4 sm:grid-cols-2"
-    >
-      {restaurants.map((r) => (
-        <motion.div key={r.id} variants={fadeUp}>
-          <RestaurantCard restaurant={r} accentColor={accentColor} onRemove={() => deleteItem.mutate(r.id)} />
-        </motion.div>
-      ))}
-    </motion.div>
+    <div>
+      <div className="mb-3 flex justify-end">
+        <ClearAllButton
+          tripId={tripId}
+          itemIds={restaurants.map((r) => r.id)}
+          label="restaurants"
+        />
+      </div>
+      <motion.div
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+        className="grid gap-4 sm:grid-cols-2"
+      >
+        {restaurants.map((r) => (
+          <motion.div key={r.id} variants={fadeUp} className="min-w-0">
+            <RestaurantCard restaurant={r} accentColor={accentColor} onRemove={() => deleteItem.mutate(r.id)} />
+          </motion.div>
+        ))}
+      </motion.div>
+    </div>
   );
 }

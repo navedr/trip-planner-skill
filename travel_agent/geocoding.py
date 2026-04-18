@@ -65,15 +65,23 @@ def geocode_address_sync(address: str, api_key: str) -> tuple[float, float] | No
 def extract_address(data: dict, destination: str | None = None) -> str | None:
     """Extract the best geocodable address string from an item's data_json.
 
-    Tries fields in priority order: address, location, neighborhood, then
-    falls back to name + destination.
+    Always folds in the trip destination when available — "Downtown" alone is
+    ambiguous to a geocoder (it picks the biggest matching city); prefixing
+    the name and appending the destination pins it to the right region.
     """
+    name = data.get("name")
+
     for field in ("address", "location", "neighborhood"):
         val = data.get(field)
         if val and isinstance(val, str):
-            return val
+            parts = []
+            if name:
+                parts.append(name)
+            parts.append(val)
+            if destination and destination.lower() not in val.lower():
+                parts.append(destination)
+            return ", ".join(parts)
 
-    name = data.get("name")
     if name and destination:
         return f"{name}, {destination}"
 

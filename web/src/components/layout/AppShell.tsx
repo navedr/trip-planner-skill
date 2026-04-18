@@ -31,7 +31,7 @@ export function AppShell() {
                 initial="enter"
                 animate="center"
                 exit="exit"
-                className="h-full"
+                className="min-h-full"
                 style={isMobile ? { paddingBottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" } : undefined}
               >
                 <Outlet />

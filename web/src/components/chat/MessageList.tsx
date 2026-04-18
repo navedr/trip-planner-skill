@@ -8,11 +8,21 @@ import { Compass } from "lucide-react";
 export function MessageList() {
   const { messages, statusText, historyLoaded } = useChat();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const didInitialScroll = useRef(false);
 
-  // Auto-scroll on new messages or status updates
+  // Reset so we jump instantly again when switching trips (history re-fetches).
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, statusText]);
+    if (!historyLoaded) didInitialScroll.current = false;
+  }, [historyLoaded]);
+
+  // Jump instantly to the latest message on first load; smooth-scroll for new ones after.
+  useEffect(() => {
+    if (!historyLoaded) return;
+    bottomRef.current?.scrollIntoView({
+      behavior: didInitialScroll.current ? "smooth" : "instant",
+    });
+    didInitialScroll.current = true;
+  }, [messages, statusText, historyLoaded]);
 
   if (messages.length === 0 && !statusText && historyLoaded) {
     return (

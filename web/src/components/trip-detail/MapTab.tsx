@@ -3,10 +3,13 @@ import { APIProvider, Map, useMap } from "@vis.gl/react-google-maps";
 import { Loader2, MapPinOff } from "lucide-react";
 import { useGoogleMapsKey } from "@/hooks/useGoogleMapsKey";
 import { useMapItems } from "@/hooks/useTrip";
+import { useClientGeocode } from "@/hooks/useClientGeocode";
 import { DaySelector } from "./DaySelector";
 import { MapMarker } from "./MapMarker";
 import { MapInfoWindow } from "./MapInfoWindow";
-import type { MapItem, ItineraryDay } from "@/lib/types";
+import type { MapItem, GeoLocation, ItineraryDay } from "@/lib/types";
+
+type LocatedMapItem = MapItem & { location: GeoLocation };
 
 interface MapTabProps {
   tripId: string;
@@ -59,16 +62,16 @@ export function MapTab({
           No locations to display
         </h3>
         <p className="max-w-xs text-xs text-muted-foreground leading-relaxed">
-          Items need geocoded coordinates to appear on the map. Search for
-          hotels, restaurants, or attractions to populate the map.
+          Search for hotels, restaurants, or attractions to populate the map.
         </p>
       </div>
     );
   }
 
   return (
-    <APIProvider apiKey={apiKey}>
+    <APIProvider apiKey={apiKey} libraries={["geocoding"]}>
       <MapContent
+        tripId={tripId}
         mapItems={mapItems}
         itinerary={itinerary}
         accentColor={accentColor}
@@ -81,11 +84,13 @@ export function MapTab({
 /* ─── Inner map content (needs APIProvider ancestor) ─── */
 
 function MapContent({
+  tripId,
   mapItems,
   itinerary,
   accentColor,
   onRemoveItem,
 }: {
+  tripId: string;
   mapItems: MapItem[];
   itinerary: ItineraryDay[];
   accentColor: string;
@@ -93,23 +98,31 @@ function MapContent({
 }) {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [activeItem, setActiveItem] = useState<{
-    item: MapItem;
+    item: LocatedMapItem;
     marker: google.maps.marker.AdvancedMarkerElement;
   } | null>(null);
 
+  // Geocode items missing coords (client-side, referer-restricted key).
+  useClientGeocode(tripId, mapItems);
+  const pendingCount = mapItems.filter((i) => !i.location).length;
+  const locatedItems = useMemo(
+    () => mapItems.filter((i): i is LocatedMapItem => i.location !== null),
+    [mapItems],
+  );
+
   // Filter items by selected day
   const visibleItems = useMemo(() => {
-    if (selectedDay === null) return mapItems;
+    if (selectedDay === null) return locatedItems;
 
     const day = itinerary.find((d) => d.day_number === selectedDay);
-    if (!day) return mapItems;
+    if (!day) return locatedItems;
 
     // Collect activity names for matching
     const activityNames = new Set(
       day.activities.map((a) => a.name.toLowerCase()),
     );
 
-    return mapItems.filter((item) => {
+    return locatedItems.filter((item) => {
       // Hotels always visible
       if (item.category === "hotel") return true;
       // Match by name (case-insensitive, partial)
@@ -120,10 +133,10 @@ function MapContent({
       }
       return false;
     });
-  }, [mapItems, itinerary, selectedDay]);
+  }, [locatedItems, itinerary, selectedDay]);
 
   const handleMarkerClick = useCallback(
-    (item: MapItem, marker: google.maps.marker.AdvancedMarkerElement) => {
+    (item: LocatedMapItem, marker: google.maps.marker.AdvancedMarkerElement) => {
       setActiveItem({ item, marker });
     },
     [],
@@ -135,11 +148,11 @@ function MapContent({
 
   // Compute center from items
   const defaultCenter = useMemo(() => {
-    if (mapItems.length === 0) return { lat: 40.76, lng: -111.89 };
-    const sumLat = mapItems.reduce((s, i) => s + i.location.lat, 0);
-    const sumLng = mapItems.reduce((s, i) => s + i.location.lng, 0);
-    return { lat: sumLat / mapItems.length, lng: sumLng / mapItems.length };
-  }, [mapItems]);
+    if (locatedItems.length === 0) return { lat: 40.76, lng: -111.89 };
+    const sumLat = locatedItems.reduce((s, i) => s + i.location.lat, 0);
+    const sumLng = locatedItems.reduce((s, i) => s + i.location.lng, 0);
+    return { lat: sumLat / locatedItems.length, lng: sumLng / locatedItems.length };
+  }, [locatedItems]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -151,6 +164,13 @@ function MapContent({
           onSelect={setSelectedDay}
           accentColor={accentColor}
         />
+      )}
+
+      {pendingCount > 0 && (
+        <div className="flex items-center gap-2 rounded-md border border-border/40 bg-card/50 px-3 py-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Looking up coordinates for {pendingCount} item{pendingCount === 1 ? "" : "s"}…
+        </div>
       )}
 
       {/* Map */}
@@ -197,7 +217,7 @@ function MapContent({
 
 /* ─── Auto-fit bounds to visible markers ─── */
 
-function AutoFitBounds({ items }: { items: MapItem[] }) {
+function AutoFitBounds({ items }: { items: LocatedMapItem[] }) {
   const map = useMap();
 
   useEffect(() => {

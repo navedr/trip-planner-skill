@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import { AttractionCard } from "./AttractionCard";
+import { ClearAllButton } from "./ClearAllButton";
 import { useDeleteItem } from "@/hooks/useTripItems";
 import { stagger, fadeUp } from "@/lib/motion";
 import type { Attraction } from "@/lib/types";
@@ -27,17 +28,26 @@ export function AttractionsTab({ attractions, tripId, accentColor }: Attractions
   }
 
   return (
-    <motion.div
-      variants={stagger}
-      initial="hidden"
-      animate="show"
-      className="grid gap-4 sm:grid-cols-2"
-    >
-      {attractions.map((a) => (
-        <motion.div key={a.id} variants={fadeUp}>
-          <AttractionCard attraction={a} accentColor={accentColor} onRemove={() => deleteItem.mutate(a.id)} />
-        </motion.div>
-      ))}
-    </motion.div>
+    <div>
+      <div className="mb-3 flex justify-end">
+        <ClearAllButton
+          tripId={tripId}
+          itemIds={attractions.map((a) => a.id)}
+          label="attractions"
+        />
+      </div>
+      <motion.div
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+        className="grid gap-4 sm:grid-cols-2"
+      >
+        {attractions.map((a) => (
+          <motion.div key={a.id} variants={fadeUp} className="min-w-0">
+            <AttractionCard attraction={a} accentColor={accentColor} onRemove={() => deleteItem.mutate(a.id)} />
+          </motion.div>
+        ))}
+      </motion.div>
+    </div>
   );
 }

@@ -1,6 +1,5 @@
 import { useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
-import { Tabbar, TabbarLink } from "konsta/react";
 import { Map, Search, Settings, MessageSquare } from "lucide-react";
 import { useChat } from "@/contexts/ChatContext";
 
@@ -9,8 +8,6 @@ const tabs = [
   { path: "/search", label: "Search", icon: Search },
   { path: "/settings", label: "Settings", icon: Settings },
 ] as const;
-
-const activeColors = { textActiveIos: "text-primary" } as const;
 
 export function BottomTabBar() {
   const navigate = useNavigate();
@@ -53,7 +50,7 @@ export function BottomTabBar() {
       </button>
     )}
 
-    <div
+    <nav
       className="lg:hidden fixed inset-x-0 bottom-0 z-50 border-t border-white/[0.06]"
       style={{
         background: "hsla(222.2, 47.4%, 11.2%, 0.8)",
@@ -62,41 +59,42 @@ export function BottomTabBar() {
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-      <Tabbar labels icons>
+      <div className="flex h-16 items-stretch justify-around">
         {tabs.map(({ path, label, icon: Icon }) => {
           const active =
             location.pathname === path ||
             location.pathname.startsWith(path + "/");
 
           return (
-            <TabbarLink
+            <button
               key={path}
-              active={active}
-              colors={activeColors}
               onClick={() => navigate(lastPaths.current[path] ?? path)}
-              icon={
-                <div
-                  className="flex items-center justify-center rounded-full transition-all duration-300"
-                  style={
-                    active
-                      ? {
-                          boxShadow:
-                            "0 0 12px 2px hsla(24, 52%, 50%, 0.35), 0 0 4px 1px hsla(24, 52%, 50%, 0.2)",
-                          background:
-                            "radial-gradient(circle, hsla(24, 52%, 50%, 0.15) 0%, transparent 70%)",
-                        }
-                      : undefined
-                  }
-                >
-                  <Icon className="h-6 w-6" />
-                </div>
+              className={
+                "flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors " +
+                (active ? "text-primary" : "text-muted-foreground hover:text-foreground")
               }
-              label={label}
-            />
+            >
+              <span
+                className="flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300"
+                style={
+                  active
+                    ? {
+                        boxShadow:
+                          "0 0 12px 2px hsla(24, 52%, 50%, 0.35), 0 0 4px 1px hsla(24, 52%, 50%, 0.2)",
+                        background:
+                          "radial-gradient(circle, hsla(24, 52%, 50%, 0.15) 0%, transparent 70%)",
+                      }
+                    : undefined
+                }
+              >
+                <Icon className="h-5 w-5" />
+              </span>
+              <span>{label}</span>
+            </button>
           );
         })}
-      </Tabbar>
-    </div>
+      </div>
+    </nav>
     </>
   );
 }

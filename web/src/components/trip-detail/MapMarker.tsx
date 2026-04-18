@@ -4,7 +4,9 @@ import {
   Pin,
   useAdvancedMarkerRef,
 } from "@vis.gl/react-google-maps";
-import type { MapItem, TripItemCategory } from "@/lib/types";
+import type { GeoLocation, MapItem, TripItemCategory } from "@/lib/types";
+
+type LocatedMapItem = MapItem & { location: GeoLocation };
 
 /** Category → marker colors */
 const categoryColors: Record<
@@ -18,8 +20,8 @@ const categoryColors: Record<
 };
 
 interface MapMarkerProps {
-  item: MapItem;
-  onClick: (item: MapItem, marker: google.maps.marker.AdvancedMarkerElement) => void;
+  item: LocatedMapItem;
+  onClick: (item: LocatedMapItem, marker: google.maps.marker.AdvancedMarkerElement) => void;
 }
 
 export function MapMarker({ item, onClick }: MapMarkerProps) {

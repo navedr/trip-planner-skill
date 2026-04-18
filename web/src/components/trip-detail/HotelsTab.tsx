@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Building2 } from "lucide-react";
 import { HotelCard } from "./HotelCard";
+import { ClearAllButton } from "./ClearAllButton";
 import { useSelectItem, useDeleteItem } from "@/hooks/useTripItems";
 import { staggerSlow, fadeUp } from "@/lib/motion";
 import type { HotelOption } from "@/lib/types";
@@ -19,24 +20,37 @@ export function HotelsTab({ hotels, tripId, accentColor }: HotelsTabProps) {
     return <EmptyState />;
   }
 
+  const clearable = hotels.filter((h) => !h.is_selected).map((h) => h.id);
+  const hasSelected = hotels.some((h) => h.is_selected);
+
   return (
-    <motion.div
-      variants={staggerSlow}
-      initial="hidden"
-      animate="show"
-      className="grid gap-4 sm:grid-cols-2"
-    >
-      {hotels.map((h) => (
-        <motion.div key={h.id} variants={fadeUp}>
-          <HotelCard
-            hotel={h}
-            accentColor={accentColor}
-            onSelect={() => selectItem.mutate(h.id)}
-            onRemove={() => deleteItem.mutate(h.id)}
-          />
-        </motion.div>
-      ))}
-    </motion.div>
+    <div>
+      <div className="mb-3 flex justify-end">
+        <ClearAllButton
+          tripId={tripId}
+          itemIds={clearable}
+          label="hotel options"
+          note={hasSelected ? "Your selected hotel will be kept." : undefined}
+        />
+      </div>
+      <motion.div
+        variants={staggerSlow}
+        initial="hidden"
+        animate="show"
+        className="grid gap-4 sm:grid-cols-2"
+      >
+        {hotels.map((h) => (
+          <motion.div key={h.id} variants={fadeUp} className="min-w-0">
+            <HotelCard
+              hotel={h}
+              accentColor={accentColor}
+              onSelect={() => selectItem.mutate(h.id)}
+              onRemove={() => deleteItem.mutate(h.id)}
+            />
+          </motion.div>
+        ))}
+      </motion.div>
+    </div>
   );
 }
 

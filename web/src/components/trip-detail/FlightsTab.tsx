@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Plane } from "lucide-react";
 import { FlightCard } from "./FlightCard";
+import { ClearAllButton } from "./ClearAllButton";
 import { useSelectItem, useDeleteItem } from "@/hooks/useTripItems";
 import { stagger, fadeUp } from "@/lib/motion";
 import type { FlightOption } from "@/lib/types";
@@ -22,8 +23,19 @@ export function FlightsTab({ flights, tripId, accentColor }: FlightsTabProps) {
     return <EmptyState />;
   }
 
+  const clearable = flights.filter((f) => !f.is_selected).map((f) => f.id);
+  const hasSelected = flights.some((f) => f.is_selected);
+
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-8">
+      <motion.div variants={fadeUp} className="flex justify-end">
+        <ClearAllButton
+          tripId={tripId}
+          itemIds={clearable}
+          label="flight options"
+          note={hasSelected ? "Your selected flight(s) will be kept." : undefined}
+        />
+      </motion.div>
       {outbound.length > 0 && (
         <motion.div variants={fadeUp}>
           <h3 className="font-display mb-3 text-sm font-medium text-muted-foreground">

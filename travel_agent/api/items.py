@@ -69,22 +69,32 @@ def list_map_items(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """Return all mappable items.
+
+    ``location`` is ``null`` when coords aren't known — the frontend geocodes
+    those client-side (referer-restricted API keys can't call the server
+    Geocoding API) and PATCHes the coords back. ``address_hint`` is a string
+    the client can feed straight into ``google.maps.Geocoder``.
+    """
     trip = crud.get_trip(db, trip_id, user.id)
     if not trip:
         raise HTTPException(status_code=404, detail="Trip not found")
     items = crud.get_trip_items(db, trip_id)
     result = []
     for item in items:
+        if item.category == "flight":
+            continue
         data = json.loads(item.data_json) if item.data_json else {}
         lat = data.get("latitude")
         lng = data.get("longitude")
-        if lat is None or lng is None:
-            continue
+        location = {"lat": lat, "lng": lng} if lat is not None and lng is not None else None
+        address_hint = extract_address(data, trip.destination) if location is None else None
         result.append({
             "id": item.id,
-            "name": data.get("name") or data.get("airline") or "Unknown",
+            "name": data.get("name") or "Unknown",
             "category": item.category,
-            "location": {"lat": lat, "lng": lng},
+            "location": location,
+            "address_hint": address_hint,
             "is_selected": item.is_selected,
             "data": data,
         })

@@ -150,7 +150,12 @@ export interface MapItem {
   id: string;
   name: string;
   category: TripItemCategory;
-  location: GeoLocation;
+  /** null = coords not yet known; frontend will geocode client-side and PATCH back. */
+  location: GeoLocation | null;
+  /** Present only when `location` is null — pass straight to google.maps.Geocoder. */
+  address_hint?: string | null;
+  is_selected?: boolean;
+  data?: Record<string, unknown>;
   detail?: string | null;
   url?: string | null;
   time?: string | null;

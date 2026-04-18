@@ -49,7 +49,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [statusText, setStatusText] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [isPanelOpen, setIsPanelOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    // Closed by default on mobile (panel is a fullscreen sheet there); open on desktop sidebar.
+    return window.matchMedia("(min-width: 1024px)").matches;
+  });
   const [pendingInput, setPendingInput] = useState<string | null>(null);
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const prevTripIdRef = useRef<string | null | undefined>(undefined);

@@ -112,6 +112,18 @@ At `http://192.168.68.168:4444/` running Chrome. Primary method — Kayak, Yelp,
 
 Claude Code's built-in `mcp__playwright__*` tools. Use only when Selenium Grid is unavailable.
 
+## Web UI Testing
+
+After making UI changes to `web/`, verify the result with Playwright MCP before reporting the task complete. Type-checking and HMR confirm the code compiles — they do not confirm the feature works.
+
+**Local dev server:** Vite runs on port **5173**, proxies `/api` → FastAPI on 8000. Playwright MCP runs outside the host network namespace, so use the LAN IP (`ipconfig getifaddr en0`), not `localhost` / `127.0.0.1`. Example: `http://192.168.68.117:5173/trips`.
+
+**Mobile UI checks:** `browser_resize` to `390x844` (iPhone 14) before testing mobile breakpoints. Tailwind's `lg:` breakpoint is **1024px** — anything below is "mobile" and gets the `BottomTabBar` + full-screen chat sheet.
+
+**Auth:** Pages under `/trips`, `/search`, `/settings` are behind `ProtectedRoute` and redirect to `/login`. Log in via the UI or seed the session cookie before testing authenticated views. Existing users live in `data/travel_planner.db` (`sqlite3 data/travel_planner.db "SELECT email FROM users;"`).
+
+**What to verify:** the element you changed is actually in the DOM (`browser_snapshot`), has non-zero size, and looks right (`browser_take_screenshot`). Clean up screenshot files after (`rm .playwright-mcp/*.png`).
+
 ## Conventions
 
 - **Every recommendation must include a link** — booking URL, Yelp page, Airbnb listing, etc. No exceptions. Applies to chat responses and HTML.
