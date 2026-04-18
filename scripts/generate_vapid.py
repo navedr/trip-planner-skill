@@ -49,7 +49,7 @@ def main() -> int:
     print("# VAPID keypair — add to your .env (butler: ~/docker/trip-planner/.env)")
     print(f"VAPID_PRIVATE_KEY={_b64url(private_bytes)}")
     print(f"VAPID_PUBLIC_KEY={_b64url(public_bytes)}")
-    print("VAPID_SUBJECT=mailto:narangwa@microsoft.com  # edit as needed")
+    print("VAPID_SUBJECT=mailto:navedindia@gmail.com  # edit as needed")
     print()
     print("# Private key (PEM, for pywebpush): save as vapid_private.pem if preferred")
     print(private_pem)
