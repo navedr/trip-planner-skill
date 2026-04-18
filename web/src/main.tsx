@@ -8,6 +8,32 @@ import { Toaster } from "@/components/ui/sonner";
 import { App } from "@/App";
 import "./globals.css";
 
+// Block pinch-zoom and double-tap zoom on mobile (PWA + Safari).
+// iOS Safari ignores viewport `user-scalable=no` outside standalone mode,
+// so event-level prevention is needed to cover the in-browser case.
+if (typeof window !== "undefined") {
+  document.addEventListener(
+    "touchmove",
+    (e) => {
+      if (e.touches.length > 1) e.preventDefault();
+    },
+    { passive: false },
+  );
+  let lastTouchEnd = 0;
+  document.addEventListener(
+    "touchend",
+    (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    },
+    { passive: false },
+  );
+  document.addEventListener("gesturestart", (e) => e.preventDefault());
+  document.addEventListener("gesturechange", (e) => e.preventDefault());
+  document.addEventListener("gestureend", (e) => e.preventDefault());
+}
+
 // In dev, proactively unregister any SW left over from a previous `devOptions.enabled: true`
 // build so it can't serve stale JS while iterating.
 if (import.meta.env.DEV && "serviceWorker" in navigator) {

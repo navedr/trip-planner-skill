@@ -61,6 +61,16 @@ def chat_history(
     ]
 
 
+@router.delete("/history")
+def delete_chat_history(
+    trip_id: str | None = None,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    deleted = crud.delete_chat_messages(db, user.id, trip_id)
+    return {"deleted": deleted}
+
+
 def _make_sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 

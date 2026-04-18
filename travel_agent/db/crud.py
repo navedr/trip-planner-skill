@@ -232,6 +232,19 @@ def get_chat_messages(
     return q.order_by(ChatMessage.created_at).limit(limit).all()
 
 
+def delete_chat_messages(
+    db: Session, user_id: str, trip_id: str | None = None,
+) -> int:
+    q = db.query(ChatMessage).filter(ChatMessage.user_id == user_id)
+    if trip_id:
+        q = q.filter(ChatMessage.trip_id == trip_id)
+    else:
+        q = q.filter(ChatMessage.trip_id.is_(None))
+    count = q.delete(synchronize_session=False)
+    db.commit()
+    return count
+
+
 def create_chat_message(
     db: Session, user_id: str, role: str, content: str, trip_id: str | None = None,
 ) -> ChatMessage:

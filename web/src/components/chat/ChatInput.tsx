@@ -78,6 +78,7 @@ export function ChatInput() {
           disabled={isStreaming || !isOnline}
           onInput={adjustHeight}
           onKeyDown={handleKeyDown}
+          style={{ fontSize: "16px" }}
           className="max-h-40 min-h-[36px] flex-1 resize-none bg-transparent px-2 py-1.5 text-sm outline-none placeholder:text-muted-foreground/50 disabled:opacity-50"
         />
         {isStreaming ? (

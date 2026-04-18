@@ -135,31 +135,31 @@ export function TripDetailPage() {
             >
               <TabsTrigger value="itinerary">
                 <CalendarDays className="h-3.5 w-3.5" />
-                Itinerary
+                <span className="hidden lg:inline">Itinerary</span>
               </TabsTrigger>
               <TabsTrigger value="flights">
                 <Plane className="h-3.5 w-3.5" />
-                Flights
+                <span className="hidden lg:inline">Flights</span>
                 <CountBadge count={flights.length} />
               </TabsTrigger>
               <TabsTrigger value="hotels">
                 <Building2 className="h-3.5 w-3.5" />
-                Hotels
+                <span className="hidden lg:inline">Hotels</span>
                 <CountBadge count={hotels.length} />
               </TabsTrigger>
               <TabsTrigger value="restaurants">
                 <UtensilsCrossed className="h-3.5 w-3.5" />
-                Restaurants
+                <span className="hidden lg:inline">Restaurants</span>
                 <CountBadge count={restaurants.length} />
               </TabsTrigger>
               <TabsTrigger value="attractions">
                 <MapPin className="h-3.5 w-3.5" />
-                Attractions
+                <span className="hidden lg:inline">Attractions</span>
                 <CountBadge count={attractions.length} />
               </TabsTrigger>
               <TabsTrigger value="map">
                 <Map className="h-3.5 w-3.5" />
-                Map
+                <span className="hidden lg:inline">Map</span>
               </TabsTrigger>
             </TabsList>
 

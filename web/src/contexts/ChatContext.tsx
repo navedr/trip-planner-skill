@@ -32,7 +32,7 @@ interface ChatState {
   setStreaming: (v: boolean) => void;
   addStatus: (text: string) => void;
   clearStatus: () => void;
-  clearMessages: () => void;
+  clearMessages: () => Promise<void>;
   prefillInput: (text: string) => void;
   consumePendingInput: () => string | null;
 }
@@ -132,7 +132,15 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const setStreaming = useCallback((v: boolean) => setIsStreaming(v), []);
   const addStatus = useCallback((text: string) => setStatusText(text), []);
   const clearStatus = useCallback(() => setStatusText(null), []);
-  const clearMessages = useCallback(() => setMessages([]), []);
+  const clearMessages = useCallback(async () => {
+    setMessages([]);
+    const qs = tripId ? `?trip_id=${tripId}` : "";
+    try {
+      await apiFetch(`/chat/history${qs}`, { method: "DELETE" });
+    } catch {
+      // Non-critical — local state is already cleared
+    }
+  }, [tripId]);
 
   const value = useMemo(
     () => ({

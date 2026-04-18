@@ -5,6 +5,7 @@ import { useChat } from "@/contexts/ChatContext";
 import { ChatHeader } from "./ChatHeader";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
+import { ClearChatDialog } from "./ClearChatDialog";
 
 const STORAGE_KEY = "voyager-chat-width";
 const DEFAULT_WIDTH = 420;
@@ -116,6 +117,7 @@ const TAB_BAR_OFFSET = "calc(4rem + env(safe-area-inset-bottom, 0px))";
 function MobileChatSheet() {
   const { isPanelOpen, togglePanel, messages, clearMessages, isStreaming } =
     useChat();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handleDragEnd = useCallback(
     (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -178,7 +180,7 @@ function MobileChatSheet() {
               </span>
               {messages.length > 0 ? (
                 <button
-                  onClick={clearMessages}
+                  onClick={() => setConfirmOpen(true)}
                   disabled={isStreaming}
                   className="text-muted-foreground disabled:opacity-50"
                 >
@@ -213,6 +215,12 @@ function MobileChatSheet() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ClearChatDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={clearMessages}
+      />
     </div>
   );
 }

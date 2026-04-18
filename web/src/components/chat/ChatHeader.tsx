@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { Compass, PanelRightClose, PanelRightOpen, Trash2 } from "lucide-react";
 import { useChat } from "@/contexts/ChatContext";
 import { cn } from "@/lib/utils";
+import { ClearChatDialog } from "./ClearChatDialog";
 
 export function ChatHeader() {
   const { isPanelOpen, togglePanel, tripId, messages, clearMessages, isStreaming } =
     useChat();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
     <div className="flex items-center justify-between border-b border-border/30 px-4 py-3">
@@ -28,7 +31,7 @@ export function ChatHeader() {
       <div className="flex items-center gap-1">
         {messages.length > 0 && (
           <button
-            onClick={clearMessages}
+            onClick={() => setConfirmOpen(true)}
             className={cn(
               "flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
               isStreaming && "pointer-events-none opacity-50",
@@ -50,6 +53,11 @@ export function ChatHeader() {
           )}
         </button>
       </div>
+      <ClearChatDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={clearMessages}
+      />
     </div>
   );
 }
