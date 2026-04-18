@@ -1,7 +1,7 @@
 import { WifiOff } from "lucide-react";
 import { useOnline } from "@/hooks/useOnline";
 
-export function OfflineBanner(): JSX.Element | null {
+export function OfflineBanner() {
   const online = useOnline();
   if (online) return null;
 
