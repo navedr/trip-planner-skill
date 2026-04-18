@@ -23,6 +23,7 @@ def get_settings(user: User = Depends(get_current_user)):
         has_api_key=user.llm_api_key_encrypted is not None,
         name=user.name,
         email=user.email,
+        notifications_enabled=bool(user.notifications_enabled),
     )
 
 
@@ -40,6 +41,8 @@ def update_settings(
         user.llm_api_key_encrypted = encrypt_api_key(req.llm_api_key)
     if req.name is not None:
         user.name = req.name
+    if req.notifications_enabled is not None:
+        user.notifications_enabled = req.notifications_enabled
     db.commit()
     db.refresh(user)
     return SettingsResponse(
@@ -48,6 +51,7 @@ def update_settings(
         has_api_key=user.llm_api_key_encrypted is not None,
         name=user.name,
         email=user.email,
+        notifications_enabled=bool(user.notifications_enabled),
     )
 
 

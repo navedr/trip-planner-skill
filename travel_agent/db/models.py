@@ -36,10 +36,12 @@ class User(Base):
     llm_provider = Column(Text, nullable=True)
     llm_api_key_encrypted = Column(Text, nullable=True)
     llm_model = Column(Text, nullable=True)
+    notifications_enabled = Column(Boolean, nullable=False, default=False, server_default="0")
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
 
     trips = relationship("Trip", back_populates="user", cascade="all, delete-orphan")
     chat_messages = relationship("ChatMessage", back_populates="user", cascade="all, delete-orphan")
+    push_subscriptions = relationship("PushSubscription", back_populates="user", cascade="all, delete-orphan")
 
 
 class Trip(Base):
@@ -106,3 +108,17 @@ class ItineraryDay(Base):
     is_flight_day = Column(Boolean, nullable=False, default=False)
 
     trip = relationship("Trip", back_populates="itinerary_days")
+
+
+class PushSubscription(Base):
+    __tablename__ = "push_subscriptions"
+
+    id = Column(Text, primary_key=True, default=_uuid)
+    user_id = Column(Text, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    endpoint = Column(Text, unique=True, nullable=False)
+    p256dh = Column(Text, nullable=False)
+    auth = Column(Text, nullable=False)
+    user_agent = Column(Text, nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    user = relationship("User", back_populates="push_subscriptions")

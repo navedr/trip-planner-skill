@@ -47,6 +47,7 @@ from travel_agent.api.items import router as items_router
 from travel_agent.api.itinerary import router as itinerary_router
 from travel_agent.api.settings import router as settings_router
 from travel_agent.api.chat import router as chat_router
+from travel_agent.api.notifications import router as notifications_router
 
 
 @asynccontextmanager
@@ -68,6 +69,7 @@ app.include_router(items_router)
 app.include_router(itinerary_router)
 app.include_router(settings_router)
 app.include_router(chat_router)
+app.include_router(notifications_router)
 
 # ---------------------------------------------------------------------------
 # Startup: build a default agent from env vars (used when request doesn't

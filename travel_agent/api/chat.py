@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import re
 from typing import AsyncGenerator
@@ -19,7 +20,10 @@ from travel_agent.db import crud
 from travel_agent.db.database import SessionLocal, get_db
 from travel_agent.db.models import User
 from travel_agent.llm_provider import make_provider
+from travel_agent.push import send_push_to_user
 from travel_agent.storage.sqlite_storage import SQLiteTripStorage
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -163,6 +167,24 @@ async def chat_stream(
                         queue.put_nowait,
                         {"type": "items_updated", "data": {"trip_id": req.trip_id}},
                     )
+                    # Fire a push notification from this executor thread using
+                    # a dedicated DB session (the request `db` belongs to the
+                    # main event loop thread).
+                    try:
+                        push_db = SessionLocal()
+                        try:
+                            send_push_to_user(
+                                push_db,
+                                user.id,
+                                "Trip updated",
+                                f"{tool_name} ran",
+                                f"/trips/{req.trip_id}",
+                                f"trip-{req.trip_id}",
+                            )
+                        finally:
+                            push_db.close()
+                    except Exception:
+                        logger.exception("push send failed (tool)")
                 return
         if status_text.startswith("  -> "):
             event = {"type": "tool_result", "data": {"result": status_text[5:]}}
@@ -189,6 +211,20 @@ async def chat_stream(
 
             # Persist assistant response
             crud.create_chat_message(db, user.id, "assistant", content, req.trip_id)
+
+            # Fire a push notification announcing the assistant reply.
+            try:
+                await asyncio.to_thread(
+                    send_push_to_user,
+                    db,
+                    user.id,
+                    "Voyager",
+                    content[:140] if content else "Response ready",
+                    f"/trips/{req.trip_id}" if req.trip_id else "/",
+                    None,
+                )
+            except Exception:
+                logger.exception("push send failed")
 
             loop.call_soon_threadsafe(
                 queue.put_nowait,

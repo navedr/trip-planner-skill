@@ -9,7 +9,7 @@ from datetime import date
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from travel_agent.db.models import Trip, TripItem, ItineraryDay, ChatMessage
+from travel_agent.db.models import Trip, TripItem, ItineraryDay, ChatMessage, PushSubscription
 
 
 # ---------------------------------------------------------------------------
@@ -259,3 +259,57 @@ def create_chat_message(
     db.commit()
     db.refresh(msg)
     return msg
+
+
+# ---------------------------------------------------------------------------
+# Push Subscriptions
+# ---------------------------------------------------------------------------
+
+
+def create_push_subscription(
+    db: Session, user_id: str, endpoint: str, p256dh: str, auth: str,
+    user_agent: str | None = None,
+) -> PushSubscription:
+    """Upsert a push subscription keyed by endpoint."""
+    existing = db.query(PushSubscription).filter(PushSubscription.endpoint == endpoint).first()
+    if existing:
+        existing.p256dh = p256dh
+        existing.auth = auth
+        existing.user_agent = user_agent
+        if existing.user_id != user_id:
+            existing.user_id = user_id
+        db.commit()
+        db.refresh(existing)
+        return existing
+
+    sub = PushSubscription(
+        id=str(uuid.uuid4()),
+        user_id=user_id,
+        endpoint=endpoint,
+        p256dh=p256dh,
+        auth=auth,
+        user_agent=user_agent,
+    )
+    db.add(sub)
+    db.commit()
+    db.refresh(sub)
+    return sub
+
+
+def delete_push_subscription(db: Session, user_id: str, endpoint: str) -> int:
+    count = (
+        db.query(PushSubscription)
+        .filter(PushSubscription.user_id == user_id, PushSubscription.endpoint == endpoint)
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return count
+
+
+def get_push_subscriptions(db: Session, user_id: str) -> list[PushSubscription]:
+    return (
+        db.query(PushSubscription)
+        .filter(PushSubscription.user_id == user_id)
+        .order_by(PushSubscription.created_at)
+        .all()
+    )

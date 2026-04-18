@@ -1,8 +1,23 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Loader2, LogOut, Save, KeyRound, User as UserIcon, Cpu } from "lucide-react";
+import {
+  Loader2,
+  LogOut,
+  Save,
+  KeyRound,
+  User as UserIcon,
+  Cpu,
+  Bell,
+  Send,
+} from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
+import {
+  isPushSupported,
+  sendTestPush,
+  subscribeUserToPush,
+  unsubscribeUserFromPush,
+} from "@/lib/push";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +29,16 @@ interface Settings {
   has_api_key: boolean;
   name: string;
   email: string;
+  notifications_enabled: boolean;
+}
+
+type PermissionState = "default" | "granted" | "denied";
+
+function currentPermission(): PermissionState {
+  if (typeof window === "undefined" || typeof Notification === "undefined") {
+    return "default";
+  }
+  return Notification.permission;
 }
 
 const PROVIDERS = [
@@ -32,19 +57,75 @@ export function SettingsPage() {
   const [model, setModel] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [hasApiKey, setHasApiKey] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationsBusy, setNotificationsBusy] = useState(false);
+  const [testBusy, setTestBusy] = useState(false);
+  const [permission, setPermission] = useState<PermissionState>(
+    currentPermission(),
+  );
+  const pushSupported = isPushSupported();
+
+  async function refreshSettings() {
+    const s = await apiFetch<Settings>("/settings");
+    setName(s.name);
+    setEmail(s.email);
+    setProvider(s.llm_provider ?? "");
+    setModel(s.llm_model ?? "");
+    setHasApiKey(s.has_api_key);
+    setNotificationsEnabled(Boolean(s.notifications_enabled));
+    return s;
+  }
 
   useEffect(() => {
-    apiFetch<Settings>("/settings")
-      .then((s) => {
-        setName(s.name);
-        setEmail(s.email);
-        setProvider(s.llm_provider ?? "");
-        setModel(s.llm_model ?? "");
-        setHasApiKey(s.has_api_key);
-      })
+    refreshSettings()
       .catch(() => toast.error("Failed to load settings"))
       .finally(() => setLoading(false));
   }, []);
+
+  async function handleToggleNotifications(next: boolean) {
+    if (notificationsBusy) return;
+    setNotificationsBusy(true);
+    const prev = notificationsEnabled;
+    setNotificationsEnabled(next);
+    try {
+      if (next) {
+        await subscribeUserToPush();
+        setPermission(currentPermission());
+        await refreshSettings();
+        toast.success("Push notifications enabled");
+      } else {
+        await unsubscribeUserFromPush();
+        await apiFetch<Settings>("/settings", {
+          method: "PATCH",
+          body: JSON.stringify({ notifications_enabled: false }),
+        });
+        await refreshSettings();
+        toast.success("Push notifications disabled");
+      }
+    } catch (err) {
+      setNotificationsEnabled(prev);
+      setPermission(currentPermission());
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update notifications",
+      );
+    } finally {
+      setNotificationsBusy(false);
+    }
+  }
+
+  async function handleSendTest() {
+    setTestBusy(true);
+    try {
+      await sendTestPush();
+      toast.success("Sent \u2014 check your system notifications.");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to send test notification",
+      );
+    } finally {
+      setTestBusy(false);
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -138,6 +219,62 @@ export function SettingsPage() {
               </Field>
             </Section>
 
+            {pushSupported && (
+              <Section title="Notifications" icon={Bell}>
+                <p className="text-xs text-muted-foreground">
+                  Get notified when the AI finishes a response or updates your
+                  trip.
+                </p>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <Label className="cursor-pointer">
+                      Enable push notifications
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Permission:{" "}
+                      <span className="font-medium">{permission}</span>
+                      {permission === "denied" && (
+                        <>
+                          {" \u2014 "}
+                          <span>
+                            enable in browser settings
+                          </span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  <Toggle
+                    checked={notificationsEnabled}
+                    disabled={notificationsBusy}
+                    busy={notificationsBusy}
+                    onChange={handleToggleNotifications}
+                    ariaLabel="Enable push notifications"
+                  />
+                </div>
+                <div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={
+                      testBusy ||
+                      !notificationsEnabled ||
+                      permission !== "granted"
+                    }
+                    onClick={handleSendTest}
+                    className="gap-2"
+                  >
+                    {testBusy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    Send test notification
+                  </Button>
+                </div>
+              </Section>
+            )}
+
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
               <Button
                 type="button"
@@ -177,6 +314,44 @@ function Section({
       </div>
       <div className="space-y-4">{children}</div>
     </section>
+  );
+}
+
+function Toggle({
+  checked,
+  disabled,
+  busy,
+  onChange,
+  ariaLabel,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  busy?: boolean;
+  onChange: (next: boolean) => void;
+  ariaLabel: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 ${
+        checked ? "bg-primary" : "bg-input"
+      }`}
+    >
+      <span
+        className={`pointer-events-none inline-flex h-5 w-5 items-center justify-center rounded-full bg-background shadow transition-transform ${
+          checked ? "translate-x-5" : "translate-x-0.5"
+        }`}
+      >
+        {busy && (
+          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+        )}
+      </span>
+    </button>
   );
 }
 

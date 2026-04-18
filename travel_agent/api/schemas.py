@@ -109,6 +109,7 @@ class SettingsResponse(BaseModel):
     has_api_key: bool = False
     name: str
     email: str
+    notifications_enabled: bool = False
 
 
 class SettingsUpdate(BaseModel):
@@ -116,3 +117,4 @@ class SettingsUpdate(BaseModel):
     llm_model: str | None = None
     llm_api_key: str | None = None  # plaintext — encrypted before storage
     name: str | None = None
+    notifications_enabled: bool | None = None

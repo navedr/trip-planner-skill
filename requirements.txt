@@ -16,3 +16,4 @@ cryptography>=43.0
 # Utilities
 pydantic-settings>=2.0
 httpx>=0.27
+pywebpush>=2.0.0
