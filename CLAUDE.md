@@ -94,10 +94,14 @@ docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 \
 
 **Production (butler — 192.168.68.168):**
 ```bash
+# Sync compose file changes from repo first (only when docker-compose.yml changed)
+scp docker-compose.yml 192.168.68.168:~/docker/trip-planner/docker-compose.yml
 ssh 192.168.68.168 "cd ~/docker/trip-planner && docker compose pull && docker compose up -d"
 ```
-- Compose + `.env` live at `~/docker/trip-planner/` on butler
+- `docker-compose.yml` is versioned in the repo (source of truth)
+- `.env` lives only on butler at `~/docker/trip-planner/.env` (secrets, not in git)
 - Exposed on port **8076**
+- **When adding a new env var:** update both `.env.example` and `docker-compose.yml` (add to the `environment:` whitelist — compose doesn't auto-forward unlisted vars)
 - Uses `multiarch` buildx builder (created with `docker buildx create --name multiarch`)
 
 ## Browser Automation

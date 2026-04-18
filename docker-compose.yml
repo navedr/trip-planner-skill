@@ -19,6 +19,9 @@ services:
       - DEFAULT_LLM_PROVIDER=${DEFAULT_LLM_PROVIDER:-}
       - DEFAULT_API_KEY=${DEFAULT_API_KEY:-}
       - DEFAULT_MODEL=${DEFAULT_MODEL:-}
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:-}
+      - VAPID_SUBJECT=${VAPID_SUBJECT:-}
     restart: unless-stopped
 
 volumes:
