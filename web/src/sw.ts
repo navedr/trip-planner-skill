@@ -29,7 +29,9 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     (async () => {
       const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-      if (clients.some((c) => (c as WindowClient).focused)) return;
+      // Suppress when the PWA is focused, unless the sender asked to force
+      // display (e.g. the Settings "Send test notification" button).
+      if (!data.force && clients.some((c) => (c as WindowClient).focused)) return;
       await self.registration.showNotification(data.title ?? "Voyager", {
         body: data.body,
         icon: "/icons/icon-192x192.svg",

@@ -34,6 +34,7 @@ def send_push_to_user(
     body: str,
     url: str | None = None,
     tag: str | None = None,
+    force: bool = False,
 ) -> int:
     """Send a Web Push notification to all active subscriptions for a user.
 
@@ -62,7 +63,7 @@ def send_push_to_user(
         logger.exception("pywebpush not available — cannot send push")
         return 0
 
-    payload = json.dumps({"title": title, "body": body, "url": url, "tag": tag})
+    payload = json.dumps({"title": title, "body": body, "url": url, "tag": tag, "force": force})
     delivered = 0
 
     for sub in subs:

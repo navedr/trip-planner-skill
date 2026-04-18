@@ -71,5 +71,6 @@ def test_push(
         db, user.id,
         title="Voyager test",
         body="Push notifications are working.",
+        force=True,
     )
     return {"sent": sent}
