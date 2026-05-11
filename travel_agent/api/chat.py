@@ -105,6 +105,7 @@ def _build_agent(user: User, trip_id: str | None, db: Session) -> TravelAgent:
     storage = SQLiteTripStorage(db, user.id)
     agent.config["storage_backend"] = "sqlite"
     agent.config["storage_instance"] = storage
+    agent.config["scraping_provider"] = user.scraping_provider or "selenium"
 
     return agent
 

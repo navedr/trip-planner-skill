@@ -84,3 +84,44 @@ def search_restaurants(
         return {"search_url": url, "results": results, "count": len(results)}
     finally:
         driver.quit()
+
+
+def search_restaurants_firecrawl(
+    destination: str,
+    cuisine: str | None = None,
+    sort: str = "rating",
+    family_friendly: bool = False,
+    price: int | None = None,
+) -> dict:
+    """Search Yelp via Firecrawl. Same return shape as search_restaurants."""
+    import re
+
+    from ._firecrawl import scrape_url
+
+    url = _build_yelp_url(destination, cuisine, sort, family_friendly, price)
+    markdown = scrape_url(url, wait_for_ms=10000)
+
+    blocks = [b.strip() for b in markdown.split("\n\n") if len(b.strip()) > 30]
+    results: list[dict] = []
+    seen: set[str] = set()
+
+    for block in blocks:
+        match = re.search(r"yelp\.com/biz/([^\s\)\?\"']+)", block)
+        if match:
+            slug = match.group(1).rstrip("/")
+            if slug in seen:
+                continue
+            seen.add(slug)
+            results.append({
+                "slug": slug,
+                "url": f"https://www.yelp.com/biz/{slug}",
+                "text": block[:500],
+            })
+        if len(results) >= 15:
+            break
+
+    if not results:
+        for block in blocks[:15]:
+            results.append({"slug": "unknown", "url": url, "text": block[:500]})
+
+    return {"search_url": url, "results": results, "count": len(results)}

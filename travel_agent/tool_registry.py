@@ -5,10 +5,10 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from .tools.flights import search_flights
-from .tools.hotels import search_kayak_hotels, search_airbnb
-from .tools.restaurants import search_restaurants
-from .tools.attractions import search_attractions
+from .tools.flights import search_flights, search_flights_firecrawl
+from .tools.hotels import search_kayak_hotels, search_kayak_hotels_firecrawl, search_airbnb, search_airbnb_firecrawl
+from .tools.restaurants import search_restaurants, search_restaurants_firecrawl
+from .tools.attractions import search_attractions, search_attractions_firecrawl
 from .tools.weather import get_forecast
 from .tools import trip_state
 
@@ -479,11 +479,23 @@ def execute_tool(name: str, arguments: dict, config: dict) -> str:
 
 def _dispatch(name: str, args: dict, config: dict) -> Any:
     grid_url = config.get("grid_url", "")
+    use_firecrawl = config.get("scraping_provider") == "firecrawl"
     plans_dir = config.get("plans_dir", "./plans")
 
     # -- Selenium-based search tools --
 
     if name == "search_flights":
+        if use_firecrawl:
+            return search_flights_firecrawl(
+                origin=args["origin"],
+                dest=args["dest"],
+                depart=args["depart"],
+                return_date=args.get("return_date"),
+                adults=args.get("adults", 1),
+                children_ages=args.get("children_ages"),
+                nonstop=args.get("nonstop", False),
+                sort=args.get("sort", "bestflight_a"),
+            )
         return search_flights(
             origin=args["origin"],
             dest=args["dest"],
@@ -497,6 +509,16 @@ def _dispatch(name: str, args: dict, config: dict) -> Any:
         )
 
     if name == "search_hotels":
+        if use_firecrawl:
+            return search_kayak_hotels_firecrawl(
+                city=args["city"],
+                checkin=args["checkin"],
+                checkout=args["checkout"],
+                adults=args.get("adults", 2),
+                children_ages=args.get("children_ages"),
+                city_id=args.get("city_id"),
+                sort=args.get("sort", "rank_a"),
+            )
         return search_kayak_hotels(
             city=args["city"],
             checkin=args["checkin"],
@@ -509,6 +531,19 @@ def _dispatch(name: str, args: dict, config: dict) -> Any:
         )
 
     if name == "search_airbnb":
+        if use_firecrawl:
+            return search_airbnb_firecrawl(
+                neighborhood=args["neighborhood"],
+                city=args["city"],
+                state=args["state"],
+                checkin=args["checkin"],
+                checkout=args["checkout"],
+                adults=args.get("adults", 2),
+                children=args.get("children", 0),
+                children_ages=args.get("children_ages"),
+                price_max=args.get("price_max"),
+                min_bedrooms=args.get("min_bedrooms"),
+            )
         return search_airbnb(
             neighborhood=args["neighborhood"],
             city=args["city"],
@@ -524,6 +559,14 @@ def _dispatch(name: str, args: dict, config: dict) -> Any:
         )
 
     if name == "search_restaurants":
+        if use_firecrawl:
+            return search_restaurants_firecrawl(
+                destination=args["destination"],
+                cuisine=args.get("cuisine"),
+                sort=args.get("sort", "rating"),
+                family_friendly=args.get("family_friendly", False),
+                price=args.get("price"),
+            )
         return search_restaurants(
             destination=args["destination"],
             cuisine=args.get("cuisine"),
@@ -534,6 +577,11 @@ def _dispatch(name: str, args: dict, config: dict) -> Any:
         )
 
     if name == "search_attractions":
+        if use_firecrawl:
+            return search_attractions_firecrawl(
+                destination=args["destination"],
+                interest=args.get("interest"),
+            )
         return search_attractions(
             destination=args["destination"],
             interest=args.get("interest"),

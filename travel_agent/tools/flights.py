@@ -74,3 +74,27 @@ def search_flights(
         return {"search_url": url, "results": results, "count": len(results)}
     finally:
         driver.quit()
+
+
+def search_flights_firecrawl(
+    origin="SEA",
+    dest="SLC",
+    depart="2026-05-26",
+    return_date=None,
+    adults=1,
+    children_ages=None,
+    nonstop=False,
+    sort="bestflight_a",
+):
+    """Search Kayak via Firecrawl. Same return shape as search_flights."""
+    from ._firecrawl import scrape_url
+
+    url = _build_kayak_url(origin, dest, depart, return_date, adults, children_ages, nonstop, sort)
+    markdown = scrape_url(url, wait_for_ms=15000)
+
+    blocks = [b.strip() for b in markdown.split("\n\n") if len(b.strip()) > 30]
+    results = [b[:600] for b in blocks[:15]]
+    if not results:
+        results = [markdown[:4000]]
+
+    return {"search_url": url, "results": results, "count": len(results)}

@@ -172,3 +172,77 @@ def search_airbnb(
         return {"search_url": url, "listings": listings, "count": len(listings)}
     finally:
         driver.quit()
+
+
+# ---------------------------------------------------------------------------
+# Firecrawl variants
+# ---------------------------------------------------------------------------
+
+def search_kayak_hotels_firecrawl(
+    city: str,
+    checkin: str,
+    checkout: str,
+    adults: int = 2,
+    children_ages: list[int] | None = None,
+    city_id: str | None = None,
+    sort: str = "rank_a",
+) -> dict:
+    """Search Kayak hotels via Firecrawl. Same return shape as search_kayak_hotels."""
+    from ._firecrawl import scrape_url
+
+    url = _build_kayak_hotel_url(city, checkin, checkout, adults, children_ages, city_id, sort)
+    markdown = scrape_url(url, wait_for_ms=15000)
+
+    blocks = [b.strip() for b in markdown.split("\n\n") if len(b.strip()) > 30]
+    results = [b[:600] for b in blocks[:15]]
+    if not results:
+        results = [markdown[:4000]]
+
+    return {"search_url": url, "results": results, "count": len(results)}
+
+
+def search_airbnb_firecrawl(
+    neighborhood: str,
+    city: str,
+    state: str,
+    checkin: str,
+    checkout: str,
+    adults: int = 2,
+    children: int = 0,
+    children_ages: list[int] | None = None,
+    price_max: int | None = None,
+    min_bedrooms: int | None = None,
+) -> dict:
+    """Search Airbnb via Firecrawl. Same return shape as search_airbnb."""
+    import re
+
+    from ._firecrawl import scrape_url
+
+    url = _build_airbnb_url(
+        neighborhood, city, state, checkin, checkout,
+        adults, children, children_ages, price_max, min_bedrooms,
+    )
+    markdown = scrape_url(url, wait_for_ms=10000)
+
+    blocks = [b.strip() for b in markdown.split("\n\n") if len(b.strip()) > 30]
+    listings: list[dict] = []
+    seen: set[str] = set()
+
+    for block in blocks[:30]:
+        match = re.search(r"airbnb\.com/rooms/(\d+)", block)
+        if match and match.group(1) not in seen:
+            room_id = match.group(1)
+            seen.add(room_id)
+            listing_url = (
+                f"https://www.airbnb.com/rooms/{room_id}"
+                f"?checkin={checkin}&checkout={checkout}&adults={adults}&children={children}"
+            )
+            listings.append({"id": room_id, "url": listing_url, "text": block[:500]})
+        if len(listings) >= 15:
+            break
+
+    if not listings:
+        for block in blocks[:15]:
+            listings.append({"id": "unknown", "url": url, "text": block[:500]})
+
+    return {"search_url": url, "listings": listings, "count": len(listings)}

@@ -110,6 +110,7 @@ class SettingsResponse(BaseModel):
     name: str
     email: str
     notifications_enabled: bool = False
+    scraping_provider: str | None = "selenium"
 
 
 class SettingsUpdate(BaseModel):
@@ -118,6 +119,7 @@ class SettingsUpdate(BaseModel):
     llm_api_key: str | None = None  # plaintext — encrypted before storage
     name: str | None = None
     notifications_enabled: bool | None = None
+    scraping_provider: str | None = None
 
 
 # ---------------------------------------------------------------------------

@@ -9,6 +9,7 @@ import {
   Cpu,
   Bell,
   Send,
+  Globe,
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
@@ -30,6 +31,7 @@ interface Settings {
   name: string;
   email: string;
   notifications_enabled: boolean;
+  scraping_provider: string | null;
 }
 
 type PermissionState = "default" | "granted" | "denied";
@@ -58,6 +60,7 @@ export function SettingsPage() {
   const [apiKey, setApiKey] = useState("");
   const [hasApiKey, setHasApiKey] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [scrapingProvider, setScrapingProvider] = useState<string>("selenium");
   const [notificationsBusy, setNotificationsBusy] = useState(false);
   const [testBusy, setTestBusy] = useState(false);
   const [permission, setPermission] = useState<PermissionState>(
@@ -73,6 +76,7 @@ export function SettingsPage() {
     setModel(s.llm_model ?? "");
     setHasApiKey(s.has_api_key);
     setNotificationsEnabled(Boolean(s.notifications_enabled));
+    setScrapingProvider(s.scraping_provider ?? "selenium");
     return s;
   }
 
@@ -137,6 +141,7 @@ export function SettingsPage() {
         llm_model: model || null,
       };
       if (apiKey.trim()) body.llm_api_key = apiKey.trim();
+      body.scraping_provider = scrapingProvider;
       const s = await apiFetch<Settings>("/settings", {
         method: "PATCH",
         body: JSON.stringify(body),
@@ -216,6 +221,19 @@ export function SettingsPage() {
                   placeholder={hasApiKey ? "••••••••••••••••" : "sk-..."}
                   autoComplete="new-password"
                 />
+              </Field>
+            </Section>
+
+            <Section title="Web Scraping" icon={Globe}>
+              <Field label="Scraping Provider" hint="Selenium uses a local browser grid. Firecrawl uses a cloud scraping API.">
+                <select
+                  value={scrapingProvider}
+                  onChange={(e) => setScrapingProvider(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="selenium">Selenium Grid</option>
+                  <option value="firecrawl">Firecrawl (Cloud)</option>
+                </select>
               </Field>
             </Section>
 

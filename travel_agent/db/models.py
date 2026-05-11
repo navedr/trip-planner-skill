@@ -36,6 +36,7 @@ class User(Base):
     llm_provider = Column(Text, nullable=True)
     llm_api_key_encrypted = Column(Text, nullable=True)
     llm_model = Column(Text, nullable=True)
+    scraping_provider = Column(Text, nullable=True, server_default="selenium")
     notifications_enabled = Column(Boolean, nullable=False, default=False, server_default="0")
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
 

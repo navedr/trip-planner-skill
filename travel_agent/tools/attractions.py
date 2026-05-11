@@ -47,3 +47,21 @@ def search_attractions(
         return {"search_url": url, "results": results, "count": len(results)}
     finally:
         driver.quit()
+
+
+def search_attractions_firecrawl(
+    destination: str,
+    interest: str | None = None,
+) -> dict:
+    """Search Google via Firecrawl. Same return shape as search_attractions."""
+    from ._firecrawl import scrape_url
+
+    url = _build_google_url(destination, interest)
+    markdown = scrape_url(url, wait_for_ms=8000)
+
+    blocks = [b.strip() for b in markdown.split("\n\n") if len(b.strip()) > 30]
+    results = [b[:600] for b in blocks[:15]]
+    if not results:
+        results = [markdown[:4000]]
+
+    return {"search_url": url, "results": results, "count": len(results)}

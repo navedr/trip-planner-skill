@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from travel_agent.auth import encrypt_api_key, get_current_user
@@ -24,6 +24,7 @@ def get_settings(user: User = Depends(get_current_user)):
         name=user.name,
         email=user.email,
         notifications_enabled=bool(user.notifications_enabled),
+        scraping_provider=user.scraping_provider or "selenium",
     )
 
 
@@ -43,6 +44,10 @@ def update_settings(
         user.name = req.name
     if req.notifications_enabled is not None:
         user.notifications_enabled = req.notifications_enabled
+    if req.scraping_provider is not None:
+        if req.scraping_provider not in ("selenium", "firecrawl"):
+            raise HTTPException(400, "scraping_provider must be 'selenium' or 'firecrawl'")
+        user.scraping_provider = req.scraping_provider
     db.commit()
     db.refresh(user)
     return SettingsResponse(
@@ -52,6 +57,7 @@ def update_settings(
         name=user.name,
         email=user.email,
         notifications_enabled=bool(user.notifications_enabled),
+        scraping_provider=user.scraping_provider or "selenium",
     )
 
 
