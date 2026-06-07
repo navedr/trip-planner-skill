@@ -3,14 +3,18 @@
 Usage:
     python search_tripadvisor.py --destination "Salt Lake City" --cuisine "Indian"
 
-Connects to the Selenium Grid at http://192.168.68.168:4444/
+Connects to the Selenium Grid at SELENIUM_GRID_URL env var (default: http://192.168.68.168:4444/)
 """
 
 import argparse
+import os
+import sys
 import time
 import urllib.parse
 
-from selenium import webdriver
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from _selenium import create_driver  # noqa: E402
+
 from selenium.webdriver.common.by import By
 
 
@@ -21,14 +25,7 @@ def search(args):
 
     url = f"https://www.tripadvisor.com/Search?q={urllib.parse.quote(query)}"
 
-    options = webdriver.ChromeOptions()
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--window-size=1920,1080")
-
-    driver = webdriver.Remote(
-        command_executor="http://192.168.68.168:4444",
-        options=options,
-    )
+    driver = create_driver()
 
     try:
         print(f"Navigating to: {url}")

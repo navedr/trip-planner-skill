@@ -7,13 +7,17 @@ Usage:
         --adults 2 --children 2,9 \
         --sort rank_a
 
-Connects to the Selenium Grid at http://192.168.68.168:4444/
+Connects to the Selenium Grid at SELENIUM_GRID_URL env var (default: http://192.168.68.168:4444/)
 """
 
 import argparse
+import os
+import sys
 import time
 
-from selenium import webdriver
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from _selenium import create_driver  # noqa: E402
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -40,14 +44,7 @@ def search(args):
         args.adults, children, args.sort, args.map,
     )
 
-    options = webdriver.ChromeOptions()
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--window-size=1920,1080")
-
-    driver = webdriver.Remote(
-        command_executor="http://192.168.68.168:4444",
-        options=options,
-    )
+    driver = create_driver()
 
     try:
         print(f"Navigating to: {url}")
