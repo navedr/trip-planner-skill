@@ -1,4 +1,4 @@
-"""Shared Selenium WebDriver factory for remote grid connections."""
+"""Shared Selenium WebDriver factory for skill scripts."""
 
 import os
 import urllib.parse

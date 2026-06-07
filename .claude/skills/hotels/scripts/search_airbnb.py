@@ -11,14 +11,15 @@ Connects to the Selenium Grid at SELENIUM_GRID_URL env var (default: http://192.
 
 import argparse
 import os
+import sys
 import time
 
-from selenium import webdriver
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from _selenium import create_driver, DEFAULT_GRID_URL  # noqa: E402
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-
-SELENIUM_GRID_URL = os.environ.get("SELENIUM_GRID_URL", "http://192.168.68.168:4444").strip()
 
 
 def build_airbnb_url(neighborhood, city, state, checkin, checkout, adults, children, children_ages):
@@ -41,14 +42,7 @@ def search(args):
         args.adults, args.children, children_ages,
     )
 
-    options = webdriver.ChromeOptions()
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--window-size=1920,1080")
-
-    driver = webdriver.Remote(
-        command_executor=SELENIUM_GRID_URL,
-        options=options,
-    )
+    driver = create_driver()
 
     try:
         print(f"Navigating to: {url}")

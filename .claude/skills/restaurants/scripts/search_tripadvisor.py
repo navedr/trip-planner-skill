@@ -8,13 +8,14 @@ Connects to the Selenium Grid at SELENIUM_GRID_URL env var (default: http://192.
 
 import argparse
 import os
+import sys
 import time
 import urllib.parse
 
-from selenium import webdriver
-from selenium.webdriver.common.by import By
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from _selenium import create_driver  # noqa: E402
 
-SELENIUM_GRID_URL = os.environ.get("SELENIUM_GRID_URL", "http://192.168.68.168:4444").strip()
+from selenium.webdriver.common.by import By
 
 
 def search(args):
@@ -24,14 +25,7 @@ def search(args):
 
     url = f"https://www.tripadvisor.com/Search?q={urllib.parse.quote(query)}"
 
-    options = webdriver.ChromeOptions()
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--window-size=1920,1080")
-
-    driver = webdriver.Remote(
-        command_executor=SELENIUM_GRID_URL,
-        options=options,
-    )
+    driver = create_driver()
 
     try:
         print(f"Navigating to: {url}")
