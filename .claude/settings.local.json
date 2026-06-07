@@ -4,8 +4,7 @@
       "Bash(mkdir -p /Users/narangwa/dev/playground/travel-planner/.claude/skills/attractions/references)",
       "Bash(mkdir -p /Users/narangwa/dev/playground/travel-planner/.claude/skills/hotels/references)",
       "Bash(mkdir -p /Users/narangwa/dev/playground/travel-planner/.claude/skills/restaurants/references)",
-      "Bash(mkdir -p /Users/narangwa/dev/playground/travel-planner/.claude/skills/flights/references)",
-      "mcp__77aba61e-c723-4b2f-8043-7cd4061b6041__accommodations_search"
+      "Bash(mkdir -p /Users/narangwa/dev/playground/travel-planner/.claude/skills/flights/references)"
     ]
   }
 }
