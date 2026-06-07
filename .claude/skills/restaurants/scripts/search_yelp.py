@@ -4,14 +4,17 @@ Usage:
     python search_yelp.py --destination "Salt Lake City, UT" --cuisine "Indian" --sort rating
     python search_yelp.py --destination "Salt Lake City, UT" --family-friendly --sort rating
 
-Connects to the Selenium Grid at http://192.168.68.168:4444/
+Connects to the Selenium Grid at SELENIUM_GRID_URL env var (default: http://192.168.68.168:4444/)
 """
 
 import argparse
+import os
 import time
 import urllib.parse
 
 from selenium import webdriver
+
+SELENIUM_GRID_URL = os.environ.get("SELENIUM_GRID_URL", "http://192.168.68.168:4444").strip()
 
 
 def build_yelp_url(destination, cuisine, sort, family_friendly, price):
@@ -47,7 +50,7 @@ def search(args):
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
 
     driver = webdriver.Remote(
-        command_executor="http://192.168.68.168:4444",
+        command_executor=SELENIUM_GRID_URL,
         options=options,
     )
 

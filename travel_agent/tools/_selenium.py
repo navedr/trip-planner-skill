@@ -1,9 +1,11 @@
 """Shared Selenium WebDriver factory for remote grid connections."""
 
+import os
+
 from selenium import webdriver
 
 
-DEFAULT_GRID_URL = "http://192.168.68.168:4444"
+DEFAULT_GRID_URL = os.environ.get("SELENIUM_GRID_URL", "http://192.168.68.168:4444").strip()
 
 
 def create_driver(grid_url: str = DEFAULT_GRID_URL) -> webdriver.Remote:

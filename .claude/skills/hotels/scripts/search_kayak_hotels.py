@@ -7,16 +7,19 @@ Usage:
         --adults 2 --children 2,9 \
         --sort rank_a
 
-Connects to the Selenium Grid at http://192.168.68.168:4444/
+Connects to the Selenium Grid at SELENIUM_GRID_URL env var (default: http://192.168.68.168:4444/)
 """
 
 import argparse
+import os
 import time
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+SELENIUM_GRID_URL = os.environ.get("SELENIUM_GRID_URL", "http://192.168.68.168:4444").strip()
 
 
 def build_kayak_hotel_url(city, city_id, checkin, checkout, adults, children, sort, map_view):
@@ -45,7 +48,7 @@ def search(args):
     options.add_argument("--window-size=1920,1080")
 
     driver = webdriver.Remote(
-        command_executor="http://192.168.68.168:4444",
+        command_executor=SELENIUM_GRID_URL,
         options=options,
     )
 
