@@ -23,6 +23,7 @@ load_dotenv()
 
 from travel_agent.llm_provider import make_provider
 from travel_agent.agent import TravelAgent
+from travel_agent.storage import make_storage
 
 
 def _status_callback(msg: str) -> None:
@@ -48,7 +49,7 @@ def main() -> None:
         provider_type, api_key, model, base_url,
         reasoning_effort=reasoning_effort, api_version=api_version,
     )
-    agent = TravelAgent(provider=provider, grid_url=grid_url, plans_dir=plans_dir)
+    agent = TravelAgent(provider=provider, grid_url=grid_url, plans_dir=plans_dir, storage=make_storage())
 
     default_models = {"openai": "gpt-5", "azure_openai": "gpt-4o", "anthropic": "claude-sonnet-4-20250514"}
     resolved_model = model or default_models.get(provider_type, "unknown")
