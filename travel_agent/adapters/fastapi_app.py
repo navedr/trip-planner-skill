@@ -32,6 +32,7 @@ from sqlalchemy.orm import Session
 
 from travel_agent.llm_provider import make_provider
 from travel_agent.agent import TravelAgent
+from travel_agent.storage import make_storage
 from travel_agent.auth import (
     create_access_token,
     create_refresh_token,
@@ -119,7 +120,7 @@ def _get_default_agent() -> TravelAgent | None:
 
     provider = make_provider(provider_type, api_key, model, base_url, api_version=api_version)
     _default_agent = TravelAgent(
-        provider=provider, grid_url=grid_url, plans_dir=_default_plans_dir
+        provider=provider, grid_url=grid_url, plans_dir=_default_plans_dir, storage=make_storage()
     )
     return _default_agent
 
@@ -166,7 +167,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
         )
         grid_url = os.environ.get("SELENIUM_GRID_URL", "http://192.168.68.168:4444")
         agent = TravelAgent(
-            provider=provider, grid_url=grid_url, plans_dir=_default_plans_dir
+            provider=provider, grid_url=grid_url, plans_dir=_default_plans_dir, storage=make_storage()
         )
     else:
         agent = _get_default_agent()

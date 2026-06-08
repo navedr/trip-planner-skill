@@ -18,10 +18,13 @@ class TravelAgent:
         provider: LLMProvider,
         grid_url: str = "http://192.168.68.168:4444",
         plans_dir: str = "./plans",
+        storage=None,
     ):
         self.provider = provider
         self._base_system_prompt = build_system_prompt()
         self.config = {"grid_url": grid_url, "plans_dir": plans_dir, "provider": provider}
+        if storage is not None:
+            self.config["storage_instance"] = storage
         self._executor = ThreadPoolExecutor(max_workers=2)
         # Import here to avoid circular imports
         from .tool_registry import TOOLS, execute_tool
@@ -31,7 +34,7 @@ class TravelAgent:
     @property
     def system_prompt(self) -> str:
         """Build system prompt with current plan context appended."""
-        storage = self.config.get("storage_instance") if self.config.get("storage_backend") == "sqlite" else None
+        storage = self.config.get("storage_instance")
         if storage:
             plans = storage.list_plans()
         else:

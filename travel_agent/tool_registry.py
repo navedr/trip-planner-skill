@@ -601,7 +601,7 @@ def _dispatch(name: str, args: dict, config: dict) -> Any:
     # When storage_backend == "sqlite", dispatch to SQLiteTripStorage instance.
     # Otherwise (default), use filesystem functions for CLI/OpenWebUI compatibility.
 
-    storage = config.get("storage_instance") if config.get("storage_backend") == "sqlite" else None
+    storage = config.get("storage_instance")
 
     if name == "create_trip":
         if storage:
