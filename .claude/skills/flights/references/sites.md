@@ -20,9 +20,8 @@ https://www.kayak.com/flights/{origin}-{destination}/{departure}/{return}/{passe
 - `sort=duration_a` — shortest duration first
 - `fs=stops%3D0` — nonstop only
 - `fs=stops%3D1` — 1 stop max
-- `fs=dep0%3DHHMM-HHMM` — outbound departure time range (e.g. `dep0%3D1200-2359` for after noon)
-- `fs=dep1%3DHHMM-HHMM` — return departure time range
-- Multiple `fs` filters combined with `;` — e.g. `fs=stops%3D0;dep0%3D1200-2359`
+- `fs=takeoff%3DOUT_START%2COUT_END%40RET_START__RET_START%2CRET_END` — departure time windows for outbound and return legs. OUT_END wraps overnight (e.g. `1159` = rest of day). Example: outbound after noon, no return filter: `takeoff%3D1200%2C1159%400000__0000%2C2359`
+- Multiple `fs` filters combined with `%3B` (`;`) — e.g. `fs=stops%3D0%3Btakeoff%3D1200%2C1159%400000__0000%2C2359`
 - `ucs=13pgc0n` — optional, can be omitted
 
 **Full examples:**

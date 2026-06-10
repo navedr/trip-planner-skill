@@ -42,7 +42,9 @@ def build_kayak_url(origin, dest, depart, return_date, adults, children, nonstop
     if depart_after:
         # depart_after is "HH:MM" or "HHMM" — e.g. "12:00" or "1200"
         hhmm = depart_after.replace(":", "")
-        fs_filters.append(f"dep0%3D{hhmm}-2359")
+        # Format: takeoff=OUT_START,OUT_END@RET_START__RET_START,RET_END
+        # OUT_END wraps (e.g. 1159 = just before midnight); @0000__0000,2359 = no return filter
+        fs_filters.append(f"takeoff%3D{hhmm}%2C1159%400000__0000%2C2359")
     if fs_filters:
         params.append("fs=" + "%3B".join(fs_filters))
     url += "?" + "&".join(params)
