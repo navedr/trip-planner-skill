@@ -11,15 +11,24 @@ Connects to the Selenium Grid at SELENIUM_GRID_URL env var (default: http://192.
 
 import argparse
 import os
+import re
 import sys
 import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from _selenium import create_driver  # noqa: E402
 
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+
+_AIRLINE_RE = re.compile(
+    r'(Alaska Airlines|United Airlines|Delta Air Lines|Delta|American Airlines|'
+    r'Southwest|JetBlue|Spirit|Frontier|Hawaiian Airlines|Hawaiian|Sun Country)',
+    re.I,
+)
+_TIME_RE = re.compile(r'^\d+:\d+\s*(am|pm)\s*[–\-]\s*\d+:\d+\s*(am|pm)', re.I)
+_PRICE_PP_RE = re.compile(r'\$([0-9,]+)\s*/\s*person', re.I)
+_PRICE_TOTAL_RE = re.compile(r'\$([0-9,]+)\s*total', re.I)
+_STOPS_RE = re.compile(r'(nonstop|\d+\s*stop)', re.I)
+_DURATION_RE = re.compile(r'(\d+h\s*\d*m?)', re.I)
 
 
 def build_kayak_url(origin, dest, depart, return_date, adults, children, nonstop, sort):
@@ -37,6 +46,53 @@ def build_kayak_url(origin, dest, depart, return_date, adults, children, nonstop
     return url
 
 
+def parse_flights(body_text, max_results=15):
+    """Extract flight records from Kayak body text using regex."""
+    lines = body_text.split('\n')
+    flights = []
+    seen = set()
+
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if not _TIME_RE.match(stripped):
+            continue
+        if stripped in seen:
+            continue
+        seen.add(stripped)
+
+        block = '\n'.join(lines[i:i + 20])
+
+        flight = {"times": stripped}
+
+        m = _AIRLINE_RE.search(block)
+        if m:
+            flight["airline"] = m.group(1)
+
+        m = _STOPS_RE.search(block)
+        if m:
+            flight["stops"] = m.group(1)
+
+        m = _DURATION_RE.search(block)
+        if m:
+            flight["duration"] = m.group(1)
+
+        m = _PRICE_PP_RE.search(block)
+        if m:
+            flight["price_per_person"] = "$" + m.group(1)
+
+        m = _PRICE_TOTAL_RE.search(block)
+        if m:
+            flight["price_total"] = "$" + m.group(1)
+
+        if "price_per_person" in flight or "price_total" in flight:
+            flights.append(flight)
+
+        if len(flights) >= max_results:
+            break
+
+    return flights
+
+
 def search(args):
     children = [int(a) for a in args.children.split(",")] if args.children else []
     url = build_kayak_url(
@@ -50,39 +106,24 @@ def search(args):
         print(f"Navigating to: {url}")
         driver.get(url)
 
-        # Wait for results to load (Kayak has a progress bar)
-        print("Waiting for results...")
-        time.sleep(10)  # Kayak's initial search takes a while
+        print("Waiting for results to load...")
+        time.sleep(15)
 
-        # Wait for flight result cards
-        WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "[class*='resultInner'], [class*='nrc6-inner']"))
-        )
+        body_text = driver.find_element("tag name", "body").text
+        flights = parse_flights(body_text)
 
-        # Extract results
-        results = driver.execute_script("""
-            const flights = [];
-            const cards = document.querySelectorAll('[class*="resultInner"], [class*="nrc6-inner"]');
-            cards.forEach((card, i) => {
-                if (i >= 10) return;  // Top 10
-                const text = card.innerText;
-                flights.push(text);
-            });
-            return flights;
-        """)
+        print(f"\nFound {len(flights)} flight results:\n")
+        print(f"{'#':<4} {'Times':<30} {'Airline':<22} {'Stops':<12} {'Duration':<12} {'$/person':<12} {'Total'}")
+        print("-" * 105)
+        for i, f in enumerate(flights, 1):
+            print(
+                f"{i:<4} {f.get('times',''):<30} {f.get('airline','?'):<22} "
+                f"{f.get('stops','?'):<12} {f.get('duration','?'):<12} "
+                f"{f.get('price_per_person','?'):<12} {f.get('price_total','?')}"
+            )
 
-        print(f"\nFound {len(results)} flight results:\n")
-        for i, result in enumerate(results, 1):
-            print(f"--- Flight {i} ---")
-            print(result)
-            print()
-
-        # Take a screenshot for reference
-        screenshot_path = f"/tmp/kayak-{args.origin}-{args.dest}-{args.depart}.png"
-        driver.save_screenshot(screenshot_path)
-        print(f"Screenshot saved: {screenshot_path}")
-
-        return results
+        print(f"\nSearch URL: {url}")
+        return flights
 
     finally:
         driver.quit()
