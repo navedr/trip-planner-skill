@@ -27,7 +27,7 @@ _STOPS_RE = re.compile(r'(nonstop|\d+\s*stop)', re.I)
 _DURATION_RE = re.compile(r'(\d+h\s*\d*m?)', re.I)
 
 
-def build_kayak_url(origin, dest, depart, return_date, adults, children, nonstop, sort):
+def build_kayak_url(origin, dest, depart, return_date, adults, children, nonstop, sort, depart_after=None):
     url = f"https://www.kayak.com/flights/{origin}-{dest}/{depart}"
     if return_date:
         url += f"/{return_date}"
@@ -36,8 +36,15 @@ def build_kayak_url(origin, dest, depart, return_date, adults, children, nonstop
         ages = "-".join(str(a) for a in children)
         url += f"/children-{ages}"
     params = [f"sort={sort}"]
+    fs_filters = []
     if nonstop:
-        params.append("fs=stops%3D0")
+        fs_filters.append("stops%3D0")
+    if depart_after:
+        # depart_after is "HH:MM" or "HHMM" — e.g. "12:00" or "1200"
+        hhmm = depart_after.replace(":", "")
+        fs_filters.append(f"dep0%3D{hhmm}-2359")
+    if fs_filters:
+        params.append("fs=" + "%3B".join(fs_filters))
     url += "?" + "&".join(params)
     return url
 
@@ -99,6 +106,7 @@ def search(args):
     url = build_kayak_url(
         args.origin, args.dest, args.depart, args.return_date,
         args.adults, children, args.nonstop, args.sort,
+        depart_after=args.depart_after,
     )
 
     driver = create_driver()
@@ -140,5 +148,6 @@ if __name__ == "__main__":
     parser.add_argument("--children", help="Comma-separated children ages (e.g., 2,9)")
     parser.add_argument("--nonstop", action="store_true", help="Nonstop flights only")
     parser.add_argument("--sort", default="bestflight_a", help="Sort order")
+    parser.add_argument("--depart-after", help="Earliest departure time HH:MM (e.g. 12:00)")
     args = parser.parse_args()
     search(args)

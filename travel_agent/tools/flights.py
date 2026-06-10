@@ -16,7 +16,7 @@ _STOPS_RE = re.compile(r'(nonstop|\d+\s*stop)', re.I)
 _DURATION_RE = re.compile(r'(\d+h\s*\d*m?)', re.I)
 
 
-def _build_kayak_url(origin, dest, depart, return_date, adults, children_ages, nonstop, sort):
+def _build_kayak_url(origin, dest, depart, return_date, adults, children_ages, nonstop, sort, depart_after=None):
     url = f"https://www.kayak.com/flights/{origin}-{dest}/{depart}"
     if return_date:
         url += f"/{return_date}"
@@ -25,8 +25,14 @@ def _build_kayak_url(origin, dest, depart, return_date, adults, children_ages, n
         ages = "-".join(str(a) for a in children_ages)
         url += f"/children-{ages}"
     params = [f"sort={sort}"]
+    fs_filters = []
     if nonstop:
-        params.append("fs=stops%3D0")
+        fs_filters.append("stops%3D0")
+    if depart_after:
+        hhmm = depart_after.replace(":", "")
+        fs_filters.append(f"dep0%3D{hhmm}-2359")
+    if fs_filters:
+        params.append("fs=" + "%3B".join(fs_filters))
     url += "?" + "&".join(params)
     return url
 
@@ -91,6 +97,7 @@ def search_flights(
     children_ages=None,
     nonstop=False,
     sort="bestflight_a",
+    depart_after=None,
     grid_url=DEFAULT_GRID_URL,
 ):
     """Search Kayak for flights and return structured results.
@@ -98,7 +105,7 @@ def search_flights(
     Returns:
         {"search_url": str, "results": [dict], "count": int}
     """
-    url = _build_kayak_url(origin, dest, depart, return_date, adults, children_ages, nonstop, sort)
+    url = _build_kayak_url(origin, dest, depart, return_date, adults, children_ages, nonstop, sort, depart_after)
 
     driver = create_driver(grid_url)
     try:
@@ -122,11 +129,12 @@ def search_flights_firecrawl(
     children_ages=None,
     nonstop=False,
     sort="bestflight_a",
+    depart_after=None,
 ):
     """Search Kayak via Firecrawl. Same return shape as search_flights."""
     from ._firecrawl import scrape_url
 
-    url = _build_kayak_url(origin, dest, depart, return_date, adults, children_ages, nonstop, sort)
+    url = _build_kayak_url(origin, dest, depart, return_date, adults, children_ages, nonstop, sort, depart_after)
     markdown = scrape_url(url, wait_for_ms=15000)
 
     # Parse structured flights from markdown body using same regex approach

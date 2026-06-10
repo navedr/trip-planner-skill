@@ -20,6 +20,9 @@ https://www.kayak.com/flights/{origin}-{destination}/{departure}/{return}/{passe
 - `sort=duration_a` — shortest duration first
 - `fs=stops%3D0` — nonstop only
 - `fs=stops%3D1` — 1 stop max
+- `fs=dep0%3DHHMM-HHMM` — outbound departure time range (e.g. `dep0%3D1200-2359` for after noon)
+- `fs=dep1%3DHHMM-HHMM` — return departure time range
+- Multiple `fs` filters combined with `;` — e.g. `fs=stops%3D0;dep0%3D1200-2359`
 - `ucs=13pgc0n` — optional, can be omitted
 
 **Full examples:**
