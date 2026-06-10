@@ -19,12 +19,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from _selenium import create_driver  # noqa: E402
 
 
-_AIRLINE_RE = re.compile(
-    r'(Alaska Airlines|United Airlines|Delta Air Lines|Delta|American Airlines|'
-    r'Southwest|JetBlue|Spirit|Frontier|Hawaiian Airlines|Hawaiian|Sun Country)',
-    re.I,
-)
 _TIME_RE = re.compile(r'^\d+:\d+\s*(am|pm)\s*[–\-]\s*\d+:\d+\s*(am|pm)', re.I)
+_NAME_LINE_RE = re.compile(r'^[A-Za-z][A-Za-z &\.\-]{2,49}$')  # text-only line, no digits/$
 _PRICE_PP_RE = re.compile(r'\$([0-9,]+)\s*/\s*person', re.I)
 _PRICE_TOTAL_RE = re.compile(r'\$([0-9,]+)\s*total', re.I)
 _STOPS_RE = re.compile(r'(nonstop|\d+\s*stop)', re.I)
@@ -64,9 +60,14 @@ def parse_flights(body_text, max_results=15):
 
         flight = {"times": stripped}
 
-        m = _AIRLINE_RE.search(block)
-        if m:
-            flight["airline"] = m.group(1)
+        # Airline is the first text-only line after the time line (works for any carrier)
+        for j in range(1, 5):
+            if i + j >= len(lines):
+                break
+            candidate = lines[i + j].strip()
+            if candidate and _NAME_LINE_RE.match(candidate):
+                flight["airline"] = candidate
+                break
 
         m = _STOPS_RE.search(block)
         if m:
