@@ -51,8 +51,29 @@ def build_kayak_url(origin, dest, depart, return_date, adults, children, nonstop
     return url
 
 
-def parse_flights(body_text, max_results=15):
-    """Extract flight records from Kayak body text using regex."""
+def _depart_hour(times_str):
+    """Return departure hour as float (24h) from '1:30 pm – 9:30 pm', or -1 on failure."""
+    m = re.match(r'^(\d+):(\d+)\s*(am|pm)', times_str.strip(), re.I)
+    if not m:
+        return -1
+    h, mi, period = int(m.group(1)), int(m.group(2)), m.group(3).lower()
+    if period == 'pm' and h != 12:
+        h += 12
+    elif period == 'am' and h == 12:
+        h = 0
+    return h + mi / 60
+
+
+def parse_flights(body_text, max_results=15, depart_after=None):
+    """Extract flight records from Kayak body text using regex.
+
+    depart_after: "HH:MM" string (24h) — skip flights departing before this time.
+    """
+    min_hour = -1
+    if depart_after:
+        parts = depart_after.replace(":", "")
+        min_hour = int(parts[:2]) + int(parts[2:]) / 60
+
     lines = body_text.split('\n')
     flights = []
     seen = set()
@@ -95,7 +116,8 @@ def parse_flights(body_text, max_results=15):
             flight["price_total"] = "$" + m.group(1)
 
         if "price_per_person" in flight or "price_total" in flight:
-            flights.append(flight)
+            if min_hour < 0 or _depart_hour(stripped) >= min_hour:
+                flights.append(flight)
 
         if len(flights) >= max_results:
             break
@@ -120,8 +142,20 @@ def search(args):
         print("Waiting for results to load...")
         time.sleep(15)
 
+        # Wait for Kayak's loading spinner to disappear, then give filters time to apply
+        from selenium.webdriver.support.ui import WebDriverWait
+        from selenium.webdriver.support import expected_conditions as EC
+        from selenium.webdriver.common.by import By
+        try:
+            WebDriverWait(driver, 30).until_not(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "[class*='loading'], [class*='spinner'], [class*='progress']"))
+            )
+        except Exception:
+            pass
+        time.sleep(5)  # Extra buffer for JS filters to apply after results load
+
         body_text = driver.find_element("tag name", "body").text
-        flights = parse_flights(body_text)
+        flights = parse_flights(body_text, depart_after=args.depart_after)
 
         print(f"\nFound {len(flights)} flight results:\n")
         print(f"{'#':<4} {'Times':<30} {'Airline':<22} {'Stops':<12} {'Duration':<12} {'$/person':<12} {'Total'}")
