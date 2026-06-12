@@ -43,8 +43,8 @@ def build_kayak_url(origin, dest, depart, return_date, adults, children, nonstop
         # depart_after is "HH:MM" or "HHMM" — e.g. "12:00" or "1200"
         hhmm = depart_after.replace(":", "")
         # Format: takeoff=OUT_START,OUT_END@RET_START__RET_START,RET_END
-        # OUT_END wraps (e.g. 1159 = just before midnight); @0000__0000,2359 = no return filter
-        fs_filters.append(f"takeoff%3D{hhmm}%2C1159%400000__0000%2C2359")
+        # 2359 = rest of day; @0000__0000,2359 = no return filter
+        fs_filters.append(f"takeoff%3D{hhmm}%2C2359%400000__0000%2C2359")
     if fs_filters:
         params.append("fs=" + "%3B".join(fs_filters))
     url += "?" + "&".join(params)
@@ -154,21 +154,24 @@ def search(args):
             pass
 
         # Poll until price data is stable — Kayak lazy-loads prices after spinner clears.
-        # Keep re-reading body text until two consecutive reads yield the same flight count
-        # or we hit the timeout (60s). This avoids capturing a partially-loaded price set.
+        # Compare both count and price fingerprint across consecutive reads; stop when
+        # both are identical for two reads in a row or 60s hard timeout.
         import time as _t
         deadline = _t.time() + 60
-        prev_count = -1
+        prev_sig = None
         body_text = ""
         while _t.time() < deadline:
             body_text = driver.find_element("tag name", "body").text
             cur_flights = parse_flights(body_text, depart_after=args.depart_after)
-            cur_count = len(cur_flights)
-            if cur_count > 0 and cur_count == prev_count:
-                print(f"  Prices stable at {cur_count} results.")
+            sig = (
+                len(cur_flights),
+                tuple(f.get("price_total") or f.get("price_per_person", "") for f in cur_flights),
+            )
+            if sig[0] > 0 and sig == prev_sig:
+                print(f"  Prices stable at {sig[0]} results.")
                 break
-            print(f"  Waiting for prices... ({cur_count} so far)", flush=True)
-            prev_count = cur_count
+            print(f"  Waiting for prices... ({sig[0]} so far)", flush=True)
+            prev_sig = sig
             _t.sleep(3)
 
         flights = parse_flights(body_text, depart_after=args.depart_after)
