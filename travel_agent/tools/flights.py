@@ -136,7 +136,7 @@ def search_flights(
         driver.get(url)
         time.sleep(15)
 
-        # Wait for loading spinner to clear, then give JS filters time to apply
+        # Wait for loading spinner to clear
         from selenium.webdriver.support.ui import WebDriverWait
         from selenium.webdriver.support import expected_conditions as EC
         from selenium.webdriver.common.by import By
@@ -146,9 +146,23 @@ def search_flights(
             )
         except Exception:
             pass
-        time.sleep(5)
 
-        body_text = driver.find_element("tag name", "body").text
+        # Poll until price data is stable — Kayak lazy-loads prices after spinner clears.
+        # Keep re-reading body text until two consecutive reads yield the same flight count
+        # or we hit the timeout (60s). This avoids capturing a partially-loaded price set.
+        import time as _t
+        deadline = _t.time() + 60
+        prev_count = -1
+        body_text = ""
+        while _t.time() < deadline:
+            body_text = driver.find_element("tag name", "body").text
+            results_now = _parse_flights(body_text, depart_after=depart_after)
+            cur_count = len(results_now)
+            if cur_count > 0 and cur_count == prev_count:
+                break
+            prev_count = cur_count
+            _t.sleep(3)
+
         results = _parse_flights(body_text, depart_after=depart_after)
 
         return {"search_url": url, "results": results, "count": len(results)}
