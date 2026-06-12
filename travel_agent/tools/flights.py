@@ -31,8 +31,8 @@ def _build_kayak_url(origin, dest, depart, return_date, adults, children_ages, n
     if depart_after:
         hhmm = depart_after.replace(":", "")
         # Format: takeoff=OUT_START,OUT_END@RET_START__RET_START,RET_END
-        # OUT_END wraps (e.g. 1159 = just before midnight); @0000__0000,2359 = no return filter
-        fs_filters.append(f"takeoff%3D{hhmm}%2C1159%400000__0000%2C2359")
+        # 2359 = rest of day; @0000__0000,2359 = no return filter
+        fs_filters.append(f"takeoff%3D{hhmm}%2C2359%400000__0000%2C2359")
     if fs_filters:
         params.append("fs=" + "%3B".join(fs_filters))
     url += "?" + "&".join(params)
@@ -136,7 +136,7 @@ def search_flights(
         driver.get(url)
         time.sleep(15)
 
-        # Wait for loading spinner to clear, then give JS filters time to apply
+        # Wait for loading spinner to clear
         from selenium.webdriver.support.ui import WebDriverWait
         from selenium.webdriver.support import expected_conditions as EC
         from selenium.webdriver.common.by import By
@@ -146,9 +146,26 @@ def search_flights(
             )
         except Exception:
             pass
-        time.sleep(5)
 
-        body_text = driver.find_element("tag name", "body").text
+        # Poll until price data is stable — Kayak lazy-loads prices after spinner clears.
+        # Compare both count and price fingerprint across consecutive reads; stop when
+        # both are identical for two reads in a row or 60s hard timeout.
+        import time as _t
+        deadline = _t.time() + 60
+        prev_sig = None
+        body_text = ""
+        while _t.time() < deadline:
+            body_text = driver.find_element("tag name", "body").text
+            results_now = _parse_flights(body_text, depart_after=depart_after)
+            sig = (
+                len(results_now),
+                tuple(f.get("price_total") or f.get("price_per_person", "") for f in results_now),
+            )
+            if sig[0] > 0 and sig == prev_sig:
+                break
+            prev_sig = sig
+            _t.sleep(3)
+
         results = _parse_flights(body_text, depart_after=depart_after)
 
         return {"search_url": url, "results": results, "count": len(results)}

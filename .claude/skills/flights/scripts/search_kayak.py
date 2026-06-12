@@ -43,8 +43,8 @@ def build_kayak_url(origin, dest, depart, return_date, adults, children, nonstop
         # depart_after is "HH:MM" or "HHMM" — e.g. "12:00" or "1200"
         hhmm = depart_after.replace(":", "")
         # Format: takeoff=OUT_START,OUT_END@RET_START__RET_START,RET_END
-        # OUT_END wraps (e.g. 1159 = just before midnight); @0000__0000,2359 = no return filter
-        fs_filters.append(f"takeoff%3D{hhmm}%2C1159%400000__0000%2C2359")
+        # 2359 = rest of day; @0000__0000,2359 = no return filter
+        fs_filters.append(f"takeoff%3D{hhmm}%2C2359%400000__0000%2C2359")
     if fs_filters:
         params.append("fs=" + "%3B".join(fs_filters))
     url += "?" + "&".join(params)
@@ -142,7 +142,7 @@ def search(args):
         print("Waiting for results to load...")
         time.sleep(15)
 
-        # Wait for Kayak's loading spinner to disappear, then give filters time to apply
+        # Wait for Kayak's loading spinner to disappear
         from selenium.webdriver.support.ui import WebDriverWait
         from selenium.webdriver.support import expected_conditions as EC
         from selenium.webdriver.common.by import By
@@ -152,9 +152,28 @@ def search(args):
             )
         except Exception:
             pass
-        time.sleep(5)  # Extra buffer for JS filters to apply after results load
 
-        body_text = driver.find_element("tag name", "body").text
+        # Poll until price data is stable — Kayak lazy-loads prices after spinner clears.
+        # Compare both count and price fingerprint across consecutive reads; stop when
+        # both are identical for two reads in a row or 60s hard timeout.
+        import time as _t
+        deadline = _t.time() + 60
+        prev_sig = None
+        body_text = ""
+        while _t.time() < deadline:
+            body_text = driver.find_element("tag name", "body").text
+            cur_flights = parse_flights(body_text, depart_after=args.depart_after)
+            sig = (
+                len(cur_flights),
+                tuple(f.get("price_total") or f.get("price_per_person", "") for f in cur_flights),
+            )
+            if sig[0] > 0 and sig == prev_sig:
+                print(f"  Prices stable at {sig[0]} results.")
+                break
+            print(f"  Waiting for prices... ({sig[0]} so far)", flush=True)
+            prev_sig = sig
+            _t.sleep(3)
+
         flights = parse_flights(body_text, depart_after=args.depart_after)
 
         print(f"\nFound {len(flights)} flight results:\n")
