@@ -118,20 +118,20 @@ https://www.airbnb.com/s/{Neighborhood}--{City}--{State}/homes?checkin={YYYY-MM-
 
 TripAdvisor blocks both Playwright and Selenium Grid. Instead, use Google search as a proxy to find TripAdvisor review data without hitting TripAdvisor directly.
 
-**Approach: Google as proxy for TripAdvisor**
+**Approach: DuckDuckGo as proxy for TripAdvisor**
 
-Search Google for: `site:tripadvisor.com "{hotel name}" "{destination}"`
+Search DuckDuckGo for: `site:tripadvisor.com "{hotel name}" "{destination}"`
 
-Google results often show TripAdvisor ratings, review counts, and review snippets directly in the search results — extract this data without clicking through to TripAdvisor.
+**Not Google** — it blocks the Grid's datacenter exit IP with an "unusual traffic" interstitial and returns zero results. DuckDuckGo's HTML endpoint serves datacenter IPs fine.
 
 **Steps (Selenium Grid):**
-1. Connect to Selenium Grid at `http://192.168.68.168:4444/` with Chrome
-2. Navigate to `https://www.google.com/search?q=site:tripadvisor.com+"{hotel name}"+"{destination}"`
-3. Extract from Google results:
-   - TripAdvisor rating (star rating shown in search snippet)
-   - Review count
-   - Review snippet text (Google often shows preview quotes)
+1. Connect via `create_driver()` from `.claude/skills/_selenium.py` — it reads `SELENIUM_GRID_URL`. Never hardcode a grid address; the `192.168.68.168` default is the home LAN and is unreachable from cloud sessions
+2. Navigate to `https://duckduckgo.com/html/?q=site:tripadvisor.com+"{hotel name}"+"{destination}"`
+3. Extract using selectors `.result, .web-result, #links > div` — skip the first 1-2 if marked `AD`:
    - TripAdvisor URL (for user reference, not for scraping)
+   - Review count (embedded in the description text)
+   - Description/snippet text
+   - **Note:** DuckDuckGo does not surface star-rating rich snippets. For a numeric rating, use Yelp — the Grid loads Yelp business pages in full
 4. Repeat for each shortlisted hotel
 5. `driver.quit()` when done
 

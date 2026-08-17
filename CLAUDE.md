@@ -128,7 +128,7 @@ finally:
 - All tools also accept an explicit `grid_url` parameter.
 - Works reliably on Kayak, Yelp, Airbnb. For Yelp, `?sort_by=rating_asc` surfaces the critical reviews.
 
-**TripAdvisor:** Blocks all automated browsers, Grid included. Use Google as proxy: `site:tripadvisor.com "{query}"`.
+**TripAdvisor:** Blocks all automated browsers, Grid included — serves an empty page shell. Proxy through **DuckDuckGo**, not Google: `https://duckduckgo.com/html/?q=site:tripadvisor.com+"{query}"` (selectors `.result, .web-result, #links > div`). Google blocks the Grid's datacenter exit IP with an "unusual traffic" interstitial. DuckDuckGo gives URLs, titles, snippets and review counts but **not** star ratings — use Yelp for ratings.
 
 ### 2. Playwright MCP (fallback)
 

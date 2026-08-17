@@ -44,22 +44,25 @@ TripAdvisor blocks both Playwright and Selenium Grid. Use Google search as a pro
 
 **Primary method: Selenium Grid** — use scripts in `scripts/` that connect to `http://192.168.68.168:4444/`. Fall back to Playwright MCP only if Selenium Grid is unavailable.
 
-**Google as proxy for TripAdvisor (recommended):**
+**DuckDuckGo as proxy for TripAdvisor (recommended):**
 ```
-https://www.google.com/search?q=site:tripadvisor.com+things+to+do+{destination}
+https://duckduckgo.com/html/?q=site:tripadvisor.com+things+to+do+{destination}
 ```
 Or for specific interests:
 ```
-https://www.google.com/search?q=site:tripadvisor.com+{interest}+{destination}
+https://duckduckgo.com/html/?q=site:tripadvisor.com+{interest}+{destination}
 ```
-Google results show TripAdvisor ratings, review counts, and snippets directly — extract this data without clicking through to TripAdvisor.
+
+**Not Google** — it blocks the Grid's datacenter exit IP with an "unusual traffic" interstitial and returns zero results. DuckDuckGo's HTML endpoint serves datacenter IPs fine.
+
+DuckDuckGo returns TripAdvisor URLs, titles, description snippets and review counts — but **not** star-rating rich snippets. For ratings, prefer Yelp, which the Grid loads in full.
 
 **Steps (Selenium Grid):**
-1. Connect to Selenium Grid at `http://192.168.68.168:4444/` with Chrome
-2. Navigate to Google search URL with `site:tripadvisor.com` query
-3. Extract attraction data from Google snippets — name, rating, review count, type, price level
-4. For details on a specific attraction, search Google for `site:tripadvisor.com "{attraction name}" "{destination}"` to get review snippets, hours, tips
-5. `driver.quit()` when done
+1. Connect via `create_driver()` from `.claude/skills/_selenium.py` — it reads `SELENIUM_GRID_URL`. Never hardcode a grid address; the `192.168.68.168` default is the home LAN and is unreachable from cloud sessions
+2. Navigate to the DuckDuckGo URL with the `site:tripadvisor.com` query
+3. Extract results using selectors `.result, .web-result, #links > div` — skip the first 1-2 if marked `AD`
+4. For a specific attraction, query `site:tripadvisor.com "{attraction name}" "{destination}"` for snippets, hours, tips
+5. `driver.quit()` in a `finally` block
 
 **Fallback (Playwright MCP):**
 1. `browser_navigate` to the Google search URL above
