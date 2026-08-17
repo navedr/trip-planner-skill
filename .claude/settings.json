@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -n --arg local \"$(date '+%A, %B %-d, %Y at %-I:%M %p %Z')\" --arg utc \"$(date -u '+%Y-%m-%d %H:%M UTC')\" '{hookSpecificOutput:{hookEventName:\"UserPromptSubmit\",additionalContext:(\"Current date and time: \" + $local + \" (\" + $utc + \"). This is re-injected on every user message — always prefer it over any earlier date stated in this conversation, which may be stale if the conversation spans multiple days.\")}}'",
+            "timeout": 5,
+            "suppressOutput": true
+          }
+        ]
+      }
+    ]
+  }
+}
