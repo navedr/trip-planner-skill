@@ -108,9 +108,27 @@ ssh 192.168.68.168 "cd ~/docker/trip-planner && docker compose pull && docker co
 
 ### 1. Selenium Grid (default)
 
-At `http://192.168.68.168:4444/` running Chrome. Primary method — Kayak, Yelp, Airbnb work reliably. All tools accept a `grid_url` parameter.
+**Always reach for the Grid first for any site lookup — ratings, reviews, prices, listings.** It is the primary research tool, not a last resort. `WebFetch` gets 403'd by Yelp and TripAdvisor, and web-search snippets routinely omit the numbers that matter (star ratings, review counts, menu prices). Do not fall back to search snippets and report a number as unavailable until the Grid has actually been tried.
 
-**TripAdvisor:** Blocks all automated browsers. Use Google as proxy: `site:tripadvisor.com "{query}"`.
+**Connect via `create_driver()` in `.claude/skills/_selenium.py`** — never hardcode a grid address:
+
+```python
+import sys; sys.path.insert(0, ".claude/skills")
+from _selenium import create_driver
+driver = create_driver()          # reads SELENIUM_GRID_URL
+try:
+    driver.get(url); time.sleep(9)
+    body = driver.find_element(By.TAG_NAME, "body").text
+finally:
+    driver.quit()
+```
+
+- **`SELENIUM_GRID_URL` is the source of truth.** It points at a remote authenticated grid reachable from anywhere, including cloud/web sessions. `_prepare_grid_url()` handles the credentials, the `@` inside the password, and the http→https upgrade for non-local hosts.
+- The hardcoded fallback `http://192.168.68.168:4444` is **butler on the home LAN** — unreachable from Claude Code on the web or any remote container. A failure against that address means the env var wasn't read; it does **not** mean the Grid is down.
+- All tools also accept an explicit `grid_url` parameter.
+- Works reliably on Kayak, Yelp, Airbnb. For Yelp, `?sort_by=rating_asc` surfaces the critical reviews.
+
+**TripAdvisor:** Blocks all automated browsers, Grid included — serves an empty page shell. Proxy through **DuckDuckGo**, not Google: `https://duckduckgo.com/html/?q=site:tripadvisor.com+"{query}"` (selectors `.result, .web-result, #links > div`). Google blocks the Grid's datacenter exit IP with an "unusual traffic" interstitial. DuckDuckGo gives URLs, titles, snippets and review counts but **not** star ratings — use Yelp for ratings.
 
 ### 2. Playwright MCP (fallback)
 

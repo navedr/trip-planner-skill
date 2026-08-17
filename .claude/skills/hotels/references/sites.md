@@ -82,37 +82,41 @@ https://www.airbnb.com/s/Sugar-House--Salt-Lake-City--UT/homes?checkin=2026-05-2
 - Airbnb may require login for some features — browsing results works without login
 - Rate limiting on rapid navigation between listings
 
-## TripAdvisor (reviews & detailed ratings) — via Google proxy
+## TripAdvisor (reviews & detailed ratings) — via DuckDuckGo proxy
 
-**Important:** TripAdvisor blocks both Playwright and Selenium Grid. Do NOT navigate to TripAdvisor directly. Instead, use Google search as a proxy to extract TripAdvisor data.
+**Important:** TripAdvisor blocks both Playwright and Selenium Grid. Do NOT navigate to TripAdvisor directly — it serves an empty page shell (body length 0). Use a search engine as a proxy instead.
 
-### Google-as-proxy approach
+### Use DuckDuckGo, not Google
 
-**Search URL:** `https://www.google.com/search?q=site:tripadvisor.com+"{hotel name}"+"{destination}"`
+**Google no longer works from the Grid.** It blocks the Grid's datacenter exit IP with an "Our systems have detected unusual traffic from your computer network" interstitial and returns zero results. Google-as-proxy only works from a residential IP.
+
+**DuckDuckGo's HTML endpoint serves datacenter IPs fine** and is the reliable proxy.
+
+**Search URL:** `https://duckduckgo.com/html/?q=site:tripadvisor.com+"{hotel name}"+"{destination}"`
 
 **Examples:**
 ```
-https://www.google.com/search?q=site:tripadvisor.com+"Hilton+Salt+Lake+City+Center"+"Salt+Lake+City"
-https://www.google.com/search?q=site:tripadvisor.com+"Grand+Hyatt+Tokyo"+"Tokyo"
+https://duckduckgo.com/html/?q=site:tripadvisor.com+"Hilton+Salt+Lake+City+Center"+"Salt+Lake+City"
+https://duckduckgo.com/html/?q=site:tripadvisor.com+"Grand+Hyatt+Tokyo"+"Tokyo"
 ```
 
-**What Google results typically show:**
-- TripAdvisor star rating (displayed in search snippet)
-- Total review count
-- Review snippet text (Google often shows 1-2 preview quotes)
-- TripAdvisor page URL (provide to user as reference link, but do not scrape it)
+**Result selectors:** `.result, .web-result, #links > div`
 
-**Data to extract from Google snippets:**
-- Overall rating (out of 5) and total review count
-- Review highlights visible in Google's preview text
-- Price range or category if shown
-- TripAdvisor URL for the user to visit manually
+**What DuckDuckGo results reliably give:**
+- TripAdvisor page URLs (provide to user as reference links, but do not scrape them)
+- Page titles and description snippets
+- **Review counts embedded in the description text** (e.g. "See 6 traveler reviews", "See Tripadvisor's 837,434 traveler reviews")
+
+**What it does NOT give:** star-rating rich snippets. Google used to surface the bubble rating directly; DuckDuckGo does not. Expect to get the review count and snippet text but often not the numeric rating.
+
+**Because of that, prefer Yelp for ratings** — the Grid loads Yelp business pages in full, including the rating, review count and rating distribution. Use TripAdvisor only for cross-referencing or when the venue isn't on Yelp.
 
 **Tips:**
 - Use quotes around the hotel name for exact match
 - Add the city name in quotes to disambiguate chains with multiple locations
-- If the first result isn't the right property, scan the top 3-5 results
-- Google may also show ratings from other review sites (Google Reviews, Booking.com) — useful for cross-referencing
+- The first 1-2 results are often ads (marked `AD`) — skip them
+- Newly opened venues frequently have several duplicate TripAdvisor listings with single-digit review counts each; check the review count before trusting a rating
 
-**Legacy direct approach (blocked — do not use):**
-TripAdvisor direct navigation (`tripadvisor.com/Search?q=...`) is blocked by bot detection on both Playwright and Selenium Grid. The Google proxy approach above is the reliable alternative.
+**Legacy approaches (blocked — do not use):**
+- TripAdvisor direct navigation (`tripadvisor.com/Search?q=...`) — bot-detected on Playwright and Selenium Grid alike
+- Google-as-proxy from the Grid — datacenter IP blocked

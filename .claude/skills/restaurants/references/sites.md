@@ -63,10 +63,13 @@ https://www.yelp.com/search?find_desc=Restaurants&find_loc=Salt+Lake+City%2C+UT&
 - "Popular times" data for busy hour avoidance
 - Direct links to menus and reservation platforms
 
-## TripAdvisor (blocked — use Google proxy if needed)
+## TripAdvisor (blocked — use DuckDuckGo proxy if needed)
 
-TripAdvisor blocks both Playwright and Selenium Grid. If TripAdvisor data is specifically needed, use Google search as a proxy:
+TripAdvisor blocks both Playwright and Selenium Grid, serving an empty page shell. If TripAdvisor data is specifically needed, proxy through DuckDuckGo:
 ```
-https://www.google.com/search?q=site:tripadvisor.com+"{restaurant name}"+"{destination}"
+https://duckduckgo.com/html/?q=site:tripadvisor.com+"{restaurant name}"+"{destination}"
 ```
-Google results show TripAdvisor ratings and snippets without hitting TripAdvisor directly.
+
+**Not Google** — it blocks the Grid's datacenter exit IP with an "unusual traffic" interstitial and returns nothing. DuckDuckGo's HTML endpoint serves datacenter IPs fine. Result selectors: `.result, .web-result, #links > div`.
+
+DuckDuckGo returns TripAdvisor URLs, titles, description snippets and review counts — but **not** star-rating rich snippets. For restaurant ratings, **use Yelp instead**: the Grid loads Yelp business pages in full, and `?sort_by=rating_asc` surfaces the critical reviews.

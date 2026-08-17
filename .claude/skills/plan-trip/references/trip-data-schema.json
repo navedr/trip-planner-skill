@@ -137,6 +137,35 @@
     "notes": {
       "type": "array",
       "items": { "type": "string" }
+    },
+    "driving": {
+      "type": "object",
+      "description": "Road trip driving details. Present when trip mode is driving, not flying.",
+      "properties": {
+        "vehicle": { "type": ["string", "null"] },
+        "total_miles": { "type": ["number", "null"] },
+        "total_drive_hours": { "type": ["number", "null"] },
+        "legs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "string" },
+              "date": { "type": "string", "format": "date" },
+              "miles": { "type": ["number", "null"] },
+              "drive_hours": { "type": ["number", "null"] },
+              "route": { "type": ["string", "null"], "description": "e.g., 'I-90 E'" },
+              "notes": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "stops": {
+      "type": "array",
+      "description": "Multi-stop lodging for road trips. Each stop has its own hotel search.",
+      "items": { "$ref": "#/$defs/TripStop" }
     }
   },
   "$defs": {
@@ -211,6 +240,27 @@
         "stroller_friendly": { "type": "boolean" },
         "drive_time_from_hotel": { "type": ["string", "null"] },
         "tripadvisor_url": { "type": ["string", "null"] }
+      }
+    },
+    "TripStop": {
+      "type": "object",
+      "required": ["name", "check_in", "check_out", "nights"],
+      "description": "A single lodging stop on a road trip.",
+      "properties": {
+        "name": { "type": "string", "description": "e.g., 'Coeur d'Alene', 'West Glacier'" },
+        "region": { "type": ["string", "null"], "description": "e.g., 'Columbia Falls / Whitefish / Coram'" },
+        "check_in": { "type": "string", "format": "date" },
+        "check_out": { "type": "string", "format": "date" },
+        "nights": { "type": "integer" },
+        "lodging_preference": { "type": ["string", "null"], "description": "e.g., 'in-park lodge preferred', 'Airbnb'" },
+        "hotels": {
+          "type": "object",
+          "properties": {
+            "search_urls": { "type": "object", "additionalProperties": { "type": "string" } },
+            "options": { "type": "array", "items": { "$ref": "#/$defs/HotelOption" } },
+            "selected": { "type": ["object", "null"], "$ref": "#/$defs/HotelOption" }
+          }
+        }
       }
     },
     "ItineraryDay": {
