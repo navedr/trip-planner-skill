@@ -60,6 +60,44 @@ The agent distinguishes user intent:
 
 The agent's system prompt includes all plans on disk. When a user says "my SLC trip" or "the Salt Lake City plan", it matches to the right `plan_dir` and loads context automatically.
 
+## Traveler Preferences
+
+Defaults for this household unless a trip says otherwise.
+
+**Who:** 2 adults + 2 children (ages 9 and 2 as of Aug 2026 — age up accordingly).
+**Home airport:** SEA (Seattle eastside).
+
+### Flights
+- **Prefer Wed→Wed or Tue→Tue.** Those are the cheapest departure/return days; default to them when proposing dates.
+- Always price a rental car — they drive at the destination rather than relying on transit.
+
+### Food
+- **No pork.** Eats shrimp, fish, chicken, beef.
+- Preferred cuisines: Indian, Pakistani, Mediterranean, Afghan, Lebanese, Jamaican, Caribbean, Mexican.
+- Common traps to flag: al pastor and carnitas, bacon in burgers/salads, pulled pork at BBQ counters, pepperoni.
+- **Yelp 4.0+ is the bar.** Check the actual rating on the business page before recommending — do not rely on
+  aggregator blurbs or "best of" listicles, which have produced 3.4-star recommendations.
+- Prefers small, characterful, inexpensive places **with table seating**. Not counter-only, not expensive
+  view restaurants. Flag wait times for no-reservation spots.
+
+### Lodging
+- Airbnb over hotels. Non-negotiables: **A/C, free off-street parking, two real beds** (a "bedroom" that is a
+  sofa bed does not count), high review count, established host.
+- Rejects hotels that charge for parking — it erases the price advantage over a rental.
+
+### Pacing
+- **Late starts.** Typically leaving around noon; do not build plans that need a 9am departure.
+- **Do not stack 3+ full activity days.** The toddler fades and the whole family suffers. Put a rest day between
+  big ones.
+- Half-days and "leave whenever" venues beat rigid ticketed schedules late in a trip.
+
+### Budget
+- Value-conscious and does the per-hour math. Declined $224 zoo admission for a half-day visit; accepted $82
+  for a one-hour museum where the toddler was free. Present cost per person and what the kids actually cost.
+- **Child-free-admission ages vary by venue and have caught us out** — SeaWorld San Diego is free at 2 and
+  under, Legoland California requires a full ticket at age 2, San Diego Zoo is free at 2 and under. Verify
+  per venue rather than assuming.
+
 ## Travel Plans
 
 Plans live in `plans/`. Each trip gets its own subfolder:
