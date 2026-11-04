@@ -92,6 +92,8 @@ Defaults for this household unless a trip says otherwise.
 - Half-days and "leave whenever" venues beat rigid ticketed schedules late in a trip.
 
 ### Budget
+- **Always show per-person prices**, alongside the total, for flights, lodging, tickets and anything else
+  priced for the group. For flights, use the fare Kayak quotes per person.
 - Value-conscious and does the per-hour math. Declined $224 zoo admission for a half-day visit; accepted $82
   for a one-hour museum where the toddler was free. Present cost per person and what the kids actually cost.
 - **Child-free-admission ages vary by venue and have caught us out** — SeaWorld San Diego is free at 2 and
