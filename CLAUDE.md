@@ -170,6 +170,25 @@ finally:
 
 **TripAdvisor:** Blocks all automated browsers, Grid included — serves an empty page shell. Proxy through **DuckDuckGo**, not Google: `https://duckduckgo.com/html/?q=site:tripadvisor.com+"{query}"` (selectors `.result, .web-result, #links > div`). Google blocks the Grid's datacenter exit IP with an "unusual traffic" interstitial. DuckDuckGo gives URLs, titles, snippets and review counts but **not** star ratings — use Yelp for ratings.
 
+### Price tracking (CDIO — changedetection.io MCP)
+
+`.mcp.json` registers the `cdio` server: our changedetection.io instance, used to **track prices over time** —
+flights (Kayak searches), hotels (Kayak hotels), Airbnb listings, tickets, rental cars. Use it instead of
+re-scraping when the question is "has the price moved?".
+
+- **Endpoint is `${CDIO_HOST}/mcp/v1`** — not `/mcp`, which redirects to the web login. Auth is
+  `Authorization: Bearer ${CDIO_MCP_TOKEN}`. Both env vars are set in the cloud environment; a new value only
+  reaches sessions started after the change. The host must be allowed in the environment's network policy.
+- **Creating a watch:** Kayak and Airbnb render prices with JavaScript, so pass `fetch_backend: "html_webdriver"`
+  (the default `html_requests` sees an empty shell). Give it a readable `title`
+  ("SEA-KOA Dec 8-15, 2A+2C nonstop") and tag it by trip (e.g. `big-island-dec-2026`) plus `flights`/`lodging`.
+  Build the URL with the same patterns as the search skills (`references/sites.md`), including traveler counts and
+  the nonstop filter, so the tracked page matches what was quoted.
+- **Reading:** `get_changes` with a date range and a trip tag answers "what moved?"; `line_timeline` /
+  `find_change` date a specific fare. Report changes per person as well as total (see Budget).
+- **Writes:** read-only tools are fine anytime. Create, update or recheck watches only when the user asks.
+  `delete_watch`, `clear_history`, `delete_tag` and `update_tag` destroy data — confirm first.
+
 ### 2. Playwright MCP (fallback)
 
 Claude Code's built-in `mcp__playwright__*` tools. Use only when Selenium Grid is unavailable.

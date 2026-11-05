@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "cdio": {
+      "type": "http",
+      "url": "${CDIO_HOST}/mcp/v1",
+      "headers": {
+        "Authorization": "Bearer ${CDIO_MCP_TOKEN}"
+      }
+    }
+  }
+}
