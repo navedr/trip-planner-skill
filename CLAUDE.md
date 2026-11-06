@@ -67,12 +67,15 @@ Defaults for this household unless a trip says otherwise.
 **Who:** 2 adults + 2 children (ages 9 and 2 as of Aug 2026 — age up accordingly).
 **Home airport:** SEA (Seattle eastside).
 
-### Places already visited
-Don't propose these as new destinations. Mention one only if the user asks, or as a deliberate repeat with a reason.
-- **San Diego** (Aug 2026)
-- **Phoenix / Scottsdale area**
-- **Joshua Tree National Park**
-- **Big Island, Hawaii** (~2021). Still open to a repeat: the older kid was ~4 then and the younger wasn't born.
+### Traveler memory (S3)
+Facts about the household that build up over time (places already visited, and the like) live in a SQLite file
+on S3, not in this file: `s3://$AWS_S3_BUCKET/travel-memory/traveler.sqlite`, managed with
+`.claude/skills/_memory.py` (needs `boto3`; run with `python3.13`).
+- **Read it before proposing destinations:** `python3.13 .claude/skills/_memory.py list`. Do not suggest a
+  `visited_place` as somewhere new unless its note says the user is open to a repeat.
+- **Write to it when the user states a durable fact:** `... set visited_place "Sedona" --value '{"when":"2027-01"}'`.
+  Writes are conditional on the version read, so a concurrent change fails loudly instead of being overwritten —
+  rerun the command.
 
 ### Flights
 - **Prefer Wed→Wed or Tue→Tue.** Those are the cheapest departure/return days; default to them when proposing dates.
