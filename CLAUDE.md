@@ -67,6 +67,13 @@ Defaults for this household unless a trip says otherwise.
 **Who:** 2 adults + 2 children (ages 9 and 2 as of Aug 2026 — age up accordingly).
 **Home airport:** SEA (Seattle eastside).
 
+### Places already visited
+Don't propose these as new destinations. Mention one only if the user asks, or as a deliberate repeat with a reason.
+- **San Diego** (Aug 2026)
+- **Phoenix / Scottsdale area**
+- **Joshua Tree National Park**
+- **Big Island, Hawaii** (~2021). Still open to a repeat: the older kid was ~4 then and the younger wasn't born.
+
 ### Flights
 - **Prefer Wed→Wed or Tue→Tue.** Those are the cheapest departure/return days; default to them when proposing dates.
 - Always price a rental car — they drive at the destination rather than relying on transit.
