@@ -176,7 +176,8 @@ finally:
 flights (Kayak searches), hotels (Kayak hotels), Airbnb listings, tickets, rental cars. Use it instead of
 re-scraping when the question is "has the price moved?".
 
-- **Endpoint is `${CDIO_HOST}/mcp/v1`** — not `/mcp`, which redirects to the web login. Auth is
+- **`CDIO_HOST` is the full endpoint URL, ending in `/mcp/v1`** (`.mcp.json` uses it as-is). Not `/mcp`,
+  which redirects to the web login — an HTML login page is what "unexpected content type text/html" means. Auth is
   `Authorization: Bearer ${CDIO_MCP_TOKEN}`. Both env vars are set in the cloud environment; a new value only
   reaches sessions started after the change. The host must be allowed in the environment's network policy.
 - **Creating a watch:** Kayak and Airbnb render prices with JavaScript, so pass `fetch_backend: "html_webdriver"`
